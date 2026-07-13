@@ -3,186 +3,127 @@
 Status: Draft  
 Version: v0.1-draft
 
-## 1. 通用约定
+## 1. 当前实现范围
 
-- 所有 ID 使用 `string`。
-- 所有时间使用 ISO 8601 string。
-- 字段使用 camelCase；后端 snake_case 必须经 Adapter 转换。
-- `uploadStatus` 与 `analysisStatus` 是独立状态。
-- API DTO 与前端 Domain Model 分开；以下字段为前端视角 Draft。
-- 单位在字段名中体现，或在字段说明中明确。可选字段必须由前端安全处理。
+本文件中的核心前端领域类型已在 `@tennis/shared-types` 编码，但这不代表 Backend、CV、
+Data Processing、Mock Service 或 Real API 已实现。未确认的契约和计算规则仍为 Draft。
+
+- 所有 ID 使用 `EntityId`，当前等同于 `string`。
+- 所有业务日期时间使用 `IsoDateTimeString`，当前等同于 ISO 8601 `string`。
+- 视频时间轴使用 `startedAtMs`、`endedAtMs` 等毫秒数，不与 ISO 日期时间混用。
+- 字段使用 camelCase；未来后端 snake_case DTO 由 Adapter 转换。
+- 数值单位体现在字段名中；接口注释不等同于运行时校验。
+- `uploadStatus`、分析任务 `status` 和分析任务 `stage` 是不同概念。
 
 ## 2. 实体关系
 
 ```text
 User 1 ── * Video 1 ── * AnalysisTask
-                  ├── 0..1 CvOutput
-                  └── 0..1 AnalysisResult
-AnalysisResult ── * PointRecord ── 1 RallyRecord ── * ShotRecord
+                  ├── 0..* CvOutput
+                  └── 0..* AnalysisResult
+AnalysisResult ── * PointRecord ── 0..1 RallyRecord ── * ShotRecord
 ```
 
-一个 Point 通常关联一个 Rally；一个 Rally 包含多个 Shot。关系与索引规则均待 Backend 和 CV 团队确认。
+一个 Rally 是连续击球过程并包含多个 Shot；一个 Point 是计分单位，通常关联一个 Rally，
+但两者不可互换。关联完整性和索引连续性是运行时业务规则，TypeScript 接口不负责校验。
 
-## 3. 核心实体
+## 3. 公共基础类型
 
-### 3.1 User
+| 类型 | 当前定义 | 说明 |
+| --- | --- | --- |
+| `EntityId` | `string` | 不假定 UUID 格式。 |
+| `IsoDateTimeString` | `string` | 约定为 ISO 8601；无运行时格式验证。 |
+| `ConfidenceScore` | `number` | 预期 0-1；无运行时范围验证。 |
 
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 用户 ID | `user_001` | Draft |
-| displayName | string | 是 | 展示名 | `Alex` | Draft |
-| createdAt | ISO 8601 string | 是 | 创建时间 | `2026-07-13T00:00:00Z` | Draft |
+脚手架阶段类型 `ProjectStage` 已覆盖 `stage-0 | stage-1 | stage-2`；`AppSurface` 保持
+`mobile | web-dashboard`。
 
-### 3.2 Video
+## 4. 用户与视频
 
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 视频 ID | `video_001` | Draft |
-| userId | string | 是 | 所属用户 | `user_001` | Draft |
-| fileName | string | 是 | 原始文件名 | `match.mp4` | Draft |
-| durationSeconds | number | 否 | 时长，秒 | `180` | 待确认 |
-| uploadStatus | UploadStatus | 是 | 上传生命周期 | `uploaded` | Draft |
-| createdAt | ISO 8601 string | 是 | 创建时间 | `2026-07-13T00:00:00Z` | Draft |
+### User
 
-### 3.3 UploadStatus
+`User` 包含 `id`、`displayName`、可选 `email`/`phone`、`role`、可选 `avatarUrl`、
+`createdAt` 和 `updatedAt`。`UserRole` 为 `user | admin | developer`。模型不包含密码、验证码、
+Token 或其他认证凭据。
 
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| value | `pending|uploading|uploaded|failed` | 是 | 上传状态 | `uploading` | Draft |
-| progressPercent | number | 否 | 上传进度，0-100 | `64` | Draft |
-| errorMessage | string | 否 | 可展示失败原因 | `网络连接中断` | Draft |
+### Video
 
-### 3.4 AnalysisTask
+`Video` 包含标识与归属、标题和原始文件名、可选存储/播放/缩略图地址、MIME 类型、
+`fileSizeBytes`、可选 `durationSeconds`、比赛属性、上传状态与时间戳。
 
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 任务 ID | `task_001` | Draft |
-| videoId | string | 是 | 视频 ID | `video_001` | Draft |
-| analysisStatus | AnalysisStatus | 是 | 整体分析状态 | `processing` | Draft |
-| analysisStage | AnalysisStage | 否 | 当前处理阶段 | `cvProcessing` | Draft |
-| failureReason | string | 否 | 可展示失败原因 | `未检测到球场` | Draft |
-| createdAt | ISO 8601 string | 是 | 创建时间 | `2026-07-13T00:01:00Z` | Draft |
+| 类型 | 联合值 |
+| --- | --- |
+| `MatchType` | `training | match` |
+| `PlayMode` | `singles | doubles` |
+| `CourtType` | `hard | clay | grass | other` |
+| `UploadStatus` | `idle | uploading | uploaded | failed | canceled` |
 
-### 3.5 AnalysisStatus 与 AnalysisStage
+`uploadProgress` 预期为 0-100，但类型本身不执行范围校验。`queued`、`processing` 和
+`succeeded` 不属于上传生命周期。
 
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| analysisStatus | `queued|processing|succeeded|failed` | 是 | 分析任务状态 | `queued` | Draft |
-| analysisStage | `queued|cvProcessing|dataProcessing|resultReady` | 否 | 任务执行阶段 | `dataProcessing` | Draft |
+## 5. 分析任务
 
-### 3.6 CvOutput
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| videoId | string | 是 | 视频 ID | `video_001` | Draft |
-| algorithmVersion | string | 是 | CV 算法版本 | `cv-v0.1` | Draft |
-| courtPoints | CourtPoint[] | 否 | 球场关键点 | `[]` | 待确认 |
-| rawPayloadRef | string | 否 | 原始输出引用 | `cv-output-001` | 待确认 |
-| generatedAt | ISO 8601 string | 是 | 生成时间 | `2026-07-13T00:02:00Z` | Draft |
-
-### 3.7 CourtPoint
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| name | string | 是 | 关键点名称 | `baselineLeft` | 待确认 |
-| xNormalized | number | 是 | 归一化横坐标，0-1 | `0.12` | Draft |
-| yNormalized | number | 是 | 归一化纵坐标，0-1 | `0.83` | Draft |
-| confidence | number | 否 | 置信度，0-1 | `0.91` | 待确认 |
-
-### 3.8 ShotRecord
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 击球 ID | `shot_001` | Draft |
-| rallyId | string | 是 | 所属回合 | `rally_001` | Draft |
-| timestampMs | number | 是 | 视频时间点，毫秒 | `12500` | Draft |
-| playerId | string | 否 | 击球球员 | `player_a` | 待确认 |
-| shotType | string | 否 | 击球类型 | `forehand` | 待确认 |
-| confidence | number | 否 | 识别置信度 | `0.82` | 待确认 |
-
-### 3.9 RallyRecord
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 回合 ID | `rally_001` | Draft |
-| pointId | string | 否 | 所属得分点 | `point_001` | Draft |
-| startedAtMs | number | 是 | 开始时间，毫秒 | `10000` | Draft |
-| endedAtMs | number | 否 | 结束时间，毫秒 | `18000` | Draft |
-| shotCount | number | 否 | 击球数量 | `4` | Draft |
-
-### 3.10 PointRecord
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| id | string | 是 | 得分点 ID | `point_001` | Draft |
-| rallyId | string | 否 | 对应回合 | `rally_001` | Draft |
-| winnerPlayerId | string | 否 | 得分方 | `player_a` | 待确认 |
-| confidence | number | 否 | 推断置信度 | `0.63` | 待确认 |
-
-### 3.11 AnalysisResult
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| videoId | string | 是 | 视频 ID | `video_001` | Draft |
-| dataVersion | string | 是 | 数据处理版本 | `result-v0.1` | Draft |
-| shots | ShotRecord[] | 是 | 击球记录 | `[]` | Draft |
-| rallies | RallyRecord[] | 是 | 回合记录 | `[]` | Draft |
-| points | PointRecord[] | 是 | 得分点记录 | `[]` | Draft |
-| generatedAt | ISO 8601 string | 是 | 生成时间 | `2026-07-13T00:03:00Z` | Draft |
-
-### 3.12 UserStatistics
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| userId | string | 是 | 用户 ID | `user_001` | Draft |
-| analyzedVideoCount | number | 是 | 已分析视频数 | `3` | Draft |
-| totalShotCount | number | 否 | 总击球数 | `86` | 待确认 |
-| updatedAt | ISO 8601 string | 是 | 更新时间 | `2026-07-13T00:03:00Z` | Draft |
-
-### 3.13 ApiResponse 与 AppError
-
-| 字段 | 类型草案 | 必填 | 含义 | 示例 | 状态 |
-| --- | --- | --- | --- | --- | --- |
-| ApiResponse.data | unknown | 否 | 成功数据 | `{}` | Draft |
-| ApiResponse.requestId | string | 否 | 请求追踪 ID | `req_001` | Draft |
-| AppError.code | string | 是 | 稳定错误码 | `ANALYSIS_FAILED` | Draft |
-| AppError.message | string | 是 | 可展示错误信息 | `分析失败，请重试` | Draft |
-| AppError.retryable | boolean | 是 | 是否可重试 | `true` | Draft |
-
-## 4. 状态机
+`AnalysisTask` 使用 `status` 表示总体生命周期，使用 `stage` 表示当前处理步骤；对外变量和
+术语仍分别称 `analysisStatus` 与 `analysisStage`，不得合并。
 
 ```text
-UploadStatus: pending → uploading → uploaded
-                         └──────→ failed
+AnalysisStatus = queued | processing | succeeded | failed | canceled
 
-AnalysisStatus: queued → processing → succeeded
-                                └──→ failed
+AnalysisStage = queued | court_detection | player_detection | ball_tracking
+              | trajectory_processing | event_extraction
+              | statistics_generation | completed
 ```
 
-失败后的重试条件和状态回退规则待确认。
+任务还包含 `progress`（预期 0-100）、独立 `errorCode`/`errorMessage`、`retryCount`、创建与
+更新时间以及可选开始/完成时间。状态迁移、失败重试与阶段回退仍为 Draft。
 
-## 5. 最小示例 JSON
+## 6. 球场坐标与结构化记录
 
-```json
-{
-  "video": {
-    "id": "video_001",
-    "userId": "user_001",
-    "fileName": "match.mp4",
-    "uploadStatus": "uploaded"
-  },
-  "analysisTask": {
-    "id": "task_001",
-    "videoId": "video_001",
-    "analysisStatus": "succeeded",
-    "analysisStage": "resultReady"
-  },
-  "analysisResult": {
-    "videoId": "video_001",
-    "dataVersion": "result-v0.1",
-    "shots": [],
-    "rallies": [],
-    "points": []
-  }
-}
-```
+`CourtPoint` 使用 `x`、`y` 和可选 `confidence`。它表示球场坐标而非页面像素；归一化、
+图像像素或真实球场坐标系的最终语义及范围仍需与 CV 团队确认，不在类型中预设范围。
+
+### ShotRecord
+
+一次击球记录包含 `videoId`、`rallyId`、`shotIndex`、可选球员、开始/结束毫秒时间、起止
+球场点、可选落地点、速度、击球类型、战术类型和置信度。
+
+- `ShotType`：`serve | forehand | backhand | volley | unknown`
+- `TacticalType`：`attack | defense | neutral | error | unknown`
+
+### RallyRecord
+
+连续击球过程包含视频/可选 Point 关联、索引、起止时间、`shotIds`、`shotCount`、可选获胜
+球员、结果和置信度。`RallyResult` 为
+`winner | forced_error | unforced_error | unknown`。`shotCount` 与 `shotIds.length` 一致性由
+运行时业务逻辑保证。
+
+### PointRecord
+
+计分单位包含视频/可选 Rally 关联、索引、起止时间、可选获胜球员、`scoringResult` 和置信度。
+完整网球计分状态机不在 v0.1 shared-types 范围内，`scoringResult` 暂为 Draft 字符串。
+
+## 7. CV 输出与分析结果
+
+`CvOutput<TPayload = unknown>` 保存 `id`、`videoId`、`version`、原始或近原始 `payload` 和
+`createdAt`。payload 的结构由未来 CV 契约决定，默认 `unknown`，不使用 `any`。
+
+`AnalysisResult` 是处理后的消费模型，包含 `id`、`videoId`、`version`、`summary`、可选
+`playerProfile`、`shots`、`rallies`、可选 `points`、`heatmapPoints` 和 `createdAt`。它不内嵌
+CV payload，也不承载 AnalysisTask 状态。
+
+`AnalysisSummary` 包含时长、击球/Rally/可选 Point 总数、平均每 Rally 击球数、最长 Rally，
+以及可选速度、移动距离和非受迫性失误指标。`PlayerProfile` 的 consistency、attack、defense、
+movement 是 Draft 展示分，范围和计算方式未确认，不构成医学、职业资格或官方评级。
+
+## 8. API 与前端错误
+
+`ApiResponse<T>` 是以 `success` 为判别字段的传输层联合类型。成功分支
+`ApiSuccessResponse<T>` 保证 `data` 为 `T` 且 `error` 不可存在；失败分支
+`ApiFailureResponse` 保证 `data` 为 `null` 且必须包含 `ApiErrorPayload`。两者均可包含
+`message` 和 `requestId`。`ApiErrorPayload` 包含 `code`、`message` 和可选 `details`。
+
+`AppError` 是前端归一化错误，包含 `code`、`userMessage`、可选 `technicalMessage`、
+`retryable`、可选 `requestId` 和 `details`。页面只应向用户展示 `userMessage`。
+
+上述字段已与当前 shared-types 代码一致，但仍只是前端/接口 Draft。HTTP 状态码、分页、错误码
+枚举和 DTO Adapter 仍待 Backend 契约确认，不能据此声称 Backend 已实现。

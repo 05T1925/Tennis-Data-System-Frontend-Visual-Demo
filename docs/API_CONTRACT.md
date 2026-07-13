@@ -12,6 +12,7 @@ Consumer: App / Web Dashboard
 
 ```json
 {
+  "success": true,
   "data": {},
   "requestId": "req_001"
 }
@@ -21,16 +22,21 @@ Consumer: App / Web Dashboard
 
 ```json
 {
+  "success": false,
+  "data": null,
   "error": {
     "code": "ANALYSIS_FAILED",
-    "message": "分析失败，请重试",
-    "retryable": true
+    "message": "分析失败，请重试"
   },
   "requestId": "req_001"
 }
 ```
 
 分页、状态码、错误码枚举和鉴权细节均待确认。列表接口计划支持 `page`、`pageSize`，空数据返回空列表而不是错误。
+
+`@tennis/shared-types` 将 `ApiResponse<T>` 编码为以 `success` 为判别字段的成功/失败联合类型：
+成功响应保证 `data` 为 `T` 且不能携带 `error`；失败响应保证 `data` 为 `null` 且必须携带
+`ApiErrorPayload`。这是前端和接口的 Draft 约定，不代表 Backend 或任何 API 已实现。
 
 ## 2. 接口目录
 
@@ -62,7 +68,7 @@ Consumer: App / Web Dashboard
 - 列表接口查询参数计划使用 `page`、`pageSize`；筛选、排序参数待确认。
 - `upload-init` 请求体至少需要文件名、文件大小和媒体类型；成功响应至少返回 `videoId` 与下一步上传信息。具体二进制方案不锁死。
 - `upload-complete` 请求体计划包含上传确认信息；成功后 Video 的 `uploadStatus` 应可查询。
-- 创建分析任务成功后返回 `analysisTask`，状态初始值计划为 `queued`。
+- 创建分析任务成功后返回 `analysisTask`，其 `status` 和 `stage` 初始值计划均为 `queued`。
 - 结果接口成功返回与 [数据模型](DATA_MODEL.md) 一致的 Domain Model；数据尚未生成时，应返回可识别的任务状态或空数据行为，具体状态码待确认。
 - 错误响应不得包含密钥、Token、内部堆栈或用户隐私。
 
@@ -86,7 +92,7 @@ Consumer: App / Web Dashboard
 
 ### 4.3 分析任务
 
-- `POST /api/v1/videos/:videoId/analysis`：App 与 Web Dashboard 使用；权限为视频所有者或内部；路径参数为 `videoId`；请求体可为空，分析选项待确认；成功返回初始 `analysisTask`；视频未上传完成时返回状态错误；无空数据情形；幂等键规则待确认。
+- `POST /api/v1/videos/:videoId/analysis`：App 与 Web Dashboard 使用；权限为视频所有者或内部；路径参数为 `videoId`；请求体可为空，分析选项待确认；成功返回初始 `analysisTask`，使用 `status` 表示总体状态、`stage` 表示处理步骤；视频未上传完成时返回状态错误；无空数据情形；幂等键规则待确认。
 - `GET /api/v1/videos/:videoId/analysis`：App 与 Web Dashboard 使用；权限为所有者或内部；路径参数为 `videoId`；成功返回 `analysisTask`；尚未创建任务时返回空数据或未找到，待确认；可重试。
 - `POST /api/v1/analysis/:taskId/retry`：Web Dashboard 使用；权限为内部；路径参数为 `taskId`；请求体计划可选重试原因；成功返回新的或更新后的 `analysisTask`；不可重试状态返回状态错误；无空数据情形；幂等规则待确认。
 

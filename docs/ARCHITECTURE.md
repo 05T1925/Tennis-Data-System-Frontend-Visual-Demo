@@ -30,9 +30,14 @@ apps/web                │
 
 ### shared-types
 
-`packages/shared-types` 当前直接导出 TypeScript 源码，只包含 `AppSurface` 和 `ProjectStage` 等工程验证类型。两端通过 `workspace:*` 引用并各自使用 `import type` 验证解析。
+`packages/shared-types` 直接导出 TypeScript 源码，现已包含 `User`、`Video`、分析任务、结构化
+分析结果和通用错误等 v0.1 核心领域类型，并保留 `AppSurface`、`ProjectStage`。两端通过
+`workspace:*` 和统一的 `src/index.ts` 出口解析类型。
 
-shared-types 当前不得提前承载 `User`、`Video`、`AnalysisResult` 等完整领域模型，也不共享 UI 样式或页面组件。领域模型编码应在后续专门阶段依据数据模型和 API 契约实施。
+shared-types 只承载稳定的跨端类型，不共享 UI、页面组件、Service、DTO Adapter、运行时校验
+或业务算法。CV 原始 payload 保持 `unknown`，避免将未确认的 CV 契约伪装为稳定领域模型。
+传输层 `ApiResponse<T>` 使用成功/失败可辨识联合：成功分支保证存在 `data: T`，失败分支保证
+存在 `error` 且 `data` 为 `null`。该类型边界仍是前端 Draft，不表示 Backend 或 API 已实现。
 
 ## 3. 尚未实现的计划架构
 
