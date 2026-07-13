@@ -1,12 +1,42 @@
 # 架构说明
 
-## 1. 当前真实架构
+## 1. 当前已实现架构
 
-当前仓库只有文档，没有 App、Web Dashboard、Backend、CV Module、Data Processing、依赖配置或可运行命令。不存在当前前端目录或共享类型代码。
+当前仓库是 pnpm monorepo，已存在两个可运行前端脚手架和一个轻量共享类型包：
 
-## 2. v0.1 计划架构
+```text
+apps/mobile (@tennis/mobile)
+        ├─ Expo Router 占位路由
+        ├─ Mobile 主题与环境配置
+        └─ import type ─┐
+                        ├─ packages/shared-types
+apps/web                │
+(@tennis/web-dashboard) ┘
+        ├─ React Router 占位路由
+        └─ Web 主题与环境配置
+```
 
-以下为计划架构，尚未实现：
+当前页面仅验证工程、导航和路由参数，不包含身份、上传、视频数据、任务、分析结果、统计或 Mock 数据。
+
+## 2. 当前前端边界
+
+### Mobile App
+
+`apps/mobile` 面向普通网球用户。当前采用 Expo 57、React Native 0.86、Expo Router 和 TypeScript，路由位于 `app/`，公共代码位于 `src/`。已建立 Safe Area、Tab 导航、独立登录/上传/视频详情占位路由、环境读取和主题 token。
+
+### Web Dashboard
+
+`apps/web` 面向内部团队。当前采用 React 19、Vite 8、React Router 和 TypeScript。`DashboardLayout` 只提供基础导航，各页面仅说明尚未实现的能力；没有权限保护、数据表格、图表或后台模板。
+
+### shared-types
+
+`packages/shared-types` 当前直接导出 TypeScript 源码，只包含 `AppSurface` 和 `ProjectStage` 等工程验证类型。两端通过 `workspace:*` 引用并各自使用 `import type` 验证解析。
+
+shared-types 当前不得提前承载 `User`、`Video`、`AnalysisResult` 等完整领域模型，也不共享 UI 样式或页面组件。领域模型编码应在后续专门阶段依据数据模型和 API 契约实施。
+
+## 3. 尚未实现的计划架构
+
+以下模块与数据流仍是计划，不是当前实现：
 
 ```text
 App / Web Dashboard
@@ -18,50 +48,28 @@ Backend → CV Module → Data Processing
 CV Output / Analysis Result / Statistics
 ```
 
-| 模块 | 计划职责 |
-| --- | --- |
-| App | 面向用户的上传、列表、状态、结果和统计体验。 |
-| Web Dashboard | 内部调试、数据查看、任务排障和演示。 |
-| Backend | 身份、视频、任务、权限、API 与存储协作。 |
-| CV Module | 输出球场、球员、球、轨迹等原始识别数据。 |
-| Data Processing | 生成 Shot、Rally、Point、Analysis Result 和 Statistics。 |
+- Backend：计划负责身份、视频、任务、权限、API 与存储协作，尚未创建。
+- CV Module：计划产生球场、球员、球和轨迹等原始输出，尚未创建。
+- Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
+- Mock/Real Service、Adapter、TanStack Query、Zustand、React Hook Form、Zod、Ant Design 和 Recharts 均尚未接入。
 
-## 3. 计划数据流
+## 4. 分层原则
 
-### 3.1 视频上传
+- 页面组织展示和交互；Service 处理请求；Adapter 转换 DTO；复杂领域逻辑独立于页面。
+- Mock Service 与 Real Service 必须遵循相同接口。
+- API DTO 与 Domain Model 分离，后端 snake_case 在 Adapter 转换为 camelCase。
+- App 与 Web 共享稳定核心类型，不强行共享 UI 和页面。
+- `uploadStatus` 与 `analysisStatus` 保持独立生命周期。
 
-App 上传视频，前端展示 `uploadStatus` 和进度；Backend 保存元数据和文件位置。二进制上传方式尚未确定。
+## 5. 配置与安全边界
 
-### 3.2 分析任务
+- Mobile 通过静态属性读取 `EXPO_PUBLIC_*`；Web 通过 `import.meta.env.VITE_*` 读取环境变量。
+- 两类公开前缀都会进入客户端，不得保存任何密钥、密码或管理员凭据。
+- pnpm 11 仅允许 `unrs-resolver` 执行安装构建脚本，配置位于 `pnpm-workspace.yaml` 的 `allowBuilds`。
 
-上传完成后由 Backend 创建 `analysisTask`；任务依次调用 CV Module 和 Data Processing，并通过 `analysisStatus`、`analysisStage` 与失败信息反馈。
+## 6. 待确认事项
 
-### 3.3 分析结果
-
-CV Module 产生 `cvOutput`，Data Processing 将其转换为业务可用的 `analysisResult` 和 `statistics`。App 默认显示业务结果；Web Dashboard 可以查看两层数据。
-
-## 4. Mock 与 Real API
-
-- Mock 模式是阶段 1 的计划，用于在后端未完成时验证前端流程。
-- Real API 模式是后续计划，使用相同 Service 接口替换 Mock 实现。
-- Supabase 仅是后端未完成时的候选过渡方案，尚未决定采用。
-
-## 5. 前端边界与分层原则
-
-- App 与 Web Dashboard 可计划共享核心 TypeScript 类型，但不应强行共享页面和业务组件。
-- 页面组织展示和交互；Service 处理请求；Adapter 转换 DTO；领域逻辑独立于页面。
-- API DTO 与前端 Domain Model 分离。后端 snake_case 由 Adapter 转换为 camelCase。
-- 服务端数据计划由 TanStack Query 管理，轻量客户端状态计划由 Zustand 管理；表单计划使用 React Hook Form 与 Zod。
-
-## 6. 错误与安全边界
-
-- 前端展示可理解的错误，Web Dashboard 可展示必要的调试上下文。
-- 不向用户端暴露内部堆栈、密钥、Token 或隐私数据。
-- 可选数据必须可安全缺失，尤其是低置信度 Point 信息。
-
-## 7. 待确认架构事项
-
-- App 与 Web 的实际仓库目录和共享包边界。
-- 认证、对象存储、上传方式和任务轮询/推送策略。
+- 身份、对象存储、上传方式、任务轮询/推送和失败恢复策略。
 - Backend、CV 与 Data Processing 的部署和版本契约。
-- API 分页、权限和错误码的最终规则。
+- API 分页、权限、错误码与最终领域模型。
+- Mobile 真机兼容性和后续测试策略。

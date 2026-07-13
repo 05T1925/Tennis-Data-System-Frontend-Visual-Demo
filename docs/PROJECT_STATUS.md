@@ -4,58 +4,79 @@
 
 ## 当前阶段
 
-阶段 0-B：建立项目文档基线与开发约束。
+阶段 1：前端项目脚手架已完成并自动验证。
 
-当前分支：`docs/stage-00-project-foundation`
+当前分支：`chore/stage-01-project-init`
 
-## 仓库状态摘要
+## 状态摘要
 
-Git 已初始化。当前存在 3 个原始且未跟踪的 Word 文档；本阶段新增仓库 Markdown 文档。没有提交历史中的项目代码、配置或依赖文件。
-
-## 已完成内容
-
-- ✅ 已完成并验证：阶段 0-A 项目只读探索。
-- ✅ 已完成并验证：阶段 0-B 文档基线，包括需求、架构、数据模型、API 草案、术语和协作约束。
+仓库已从文档基线升级为 pnpm monorepo，包含可启动的 Expo Mobile、可启动和构建的 Vite Web Dashboard、共享类型包、占位路由、主题、环境变量示例、ESLint、Prettier 和统一根命令。所有页面仍是工程占位页，不代表业务功能完成。
 
 ## 模块状态
 
-| 模块 | 状态 | 真实说明 |
-| --- | --- | --- |
-| App | ⏳ 尚未实现 | 代码尚未创建。 |
-| Web Dashboard | ⏳ 尚未实现 | 代码尚未创建。 |
-| Backend | ⏳ 尚未实现 | 代码尚未创建。 |
-| CV Module | ⏳ 尚未实现 | 代码尚未创建。 |
-| Data Processing | ⏳ 尚未实现 | 代码尚未创建。 |
-| Mock Service | ⏳ 尚未实现 | 仅为阶段 1 计划。 |
-| Real API | ⏳ 尚未实现 | 仅有 Draft 接口草案。 |
+| 模块                    | 状态            | 真实说明                                                                   |
+| ----------------------- | --------------- | -------------------------------------------------------------------------- |
+| Mobile App              | ✅ 脚手架已验证 | Expo/Metro 可启动；基础路由、Safe Area、主题和环境读取已建立。真机未验证。 |
+| Web Dashboard           | ✅ 脚手架已验证 | Vite 可启动和构建；React Router 与基础 Dashboard 导航已建立。              |
+| shared-types            | ✅ 基础包已验证 | 两端可解析；仅有少量非业务类型。                                           |
+| Backend                 | ⏳ 尚未实现     | 未创建。                                                                   |
+| CV Module               | ⏳ 尚未实现     | 未创建。                                                                   |
+| Data Processing         | ⏳ 尚未实现     | 未创建。                                                                   |
+| Mock Service / Real API | ⏳ 尚未实现     | 未接入。                                                                   |
 
-App、Web、Backend、CV 和数据处理代码均尚未创建。
+## 当前路由
 
-## 技术方案状态
+- Mobile：`/`、`/(auth)/login`、`/(tabs)`、`/(tabs)/videos`、`/(tabs)/statistics`、`/(tabs)/profile`、`/upload`、`/videos/[videoId]`。
+- Web：`/login`、`/`、`/videos`、`/videos/:videoId`、`/analysis-tasks`、`/statistics`、`/system`。
 
-📋 已确定计划，尚未实现：App 计划采用 Expo/React Native；Web Dashboard 计划采用 React/Vite；计划使用 pnpm workspace、共享类型、TanStack Query、Zustand、React Hook Form 和 Zod。Supabase 为候选过渡方案，❓ 待确认。
+## 当前核心依赖
 
-## 当前可用命令
+- Mobile：Expo SDK 57、React Native 0.86、React 19.2.3、Expo Router 57、TypeScript 6。
+- Web：React 19.2.7、Vite 8、React Router 7、TypeScript 6。
+- 工程：pnpm 11 workspace、ESLint flat config、Prettier 3、`@tennis/shared-types`。
 
-当前没有可运行命令。不存在安装、启动、测试、lint 或 typecheck 命令。
+未安装 Ant Design、Recharts、TanStack Query、Zustand、React Hook Form、Zod、测试框架、Husky 或 CI/CD 工具。
 
-## 核心文档
+## 可用命令
 
-- [README](../README.md)
-- [AI 协作规则](../AGENTS.md)
-- [产品需求](PRODUCT_REQUIREMENTS.md)
-- [架构说明](ARCHITECTURE.md)
-- [数据模型](DATA_MODEL.md)
-- [API 草案](API_CONTRACT.md)
-- [术语表](GLOSSARY.md)
-- [阶段记录](progress/stage-00-project-foundation.md)
+```powershell
+pnpm install
+pnpm mobile:start
+pnpm web:dev
+pnpm web:build
+pnpm lint
+pnpm typecheck
+pnpm format
+pnpm format:check
+```
 
-## 已知问题与待确认事项
+## 验证状态
 
-- ❓ App 与 Web 的实际目录、共享包边界和初始化顺序未确定。
-- ❓ 认证、视频上传、存储、任务轮询、API 权限和错误码未确认。
-- ❓ CV 输出字段、算法版本、置信度与统计定义未确认。
+- `pnpm install`：通过；pnpm 11 显式允许 `unrs-resolver` 构建脚本。
+- `pnpm lint`：通过，覆盖 Mobile、Web 和 shared-types。
+- `pnpm typecheck`：通过，覆盖 Mobile、Web 和 shared-types。
+- `pnpm format:check`：通过。
+- `pnpm web:build`：通过。
+- `pnpm web:dev`：通过，`http://localhost:5173/videos/demo-video` 返回 200，进程已关闭。
+- `pnpm mobile:start`：通过，Metro 在 `http://localhost:8081` 就绪，状态为 `packager-status:running`，进程已关闭。
+- Mobile 真机、模拟器和浏览器交互：未验证。
 
-## 下一阶段目标
+## 未实现业务
 
-阶段 1 应在确认目录结构和初始化范围后创建前端脚手架，并补充真实可运行命令与验证流程。
+登录认证、验证码、视频选择与上传、上传进度、视频列表与播放、任务创建与轮询、CV 输出、结构化结果、统计图表、Mock Service、Real API、数据库、Backend、CV、Data Processing 均未实现。
+
+## 已知问题与风险
+
+- 高：Backend、上传和 CV 契约未确认，后续不得把 Draft 文档直接当成正式接口。
+- 中：Mobile 仅验证 Metro 启动与类型解析，尚未进行真机/模拟器导航和视觉验证。
+- 低：Mobile 与 Web 使用官方模板各自兼容的 React 精确版本，当前分别为 19.2.3 和 19.2.7；不应无理由强制统一。
+- 低：依赖树包含 `uuid@7.0.3` 的上游弃用提示，不影响当前安装和验证。
+
+## 下一阶段前置条件
+
+- 明确下一阶段的单一业务目标、允许修改范围和验收路径。
+- 确认身份、上传、存储、任务和 API 契约中与该目标直接相关的最小子集。
+- 为开始业务实现建立 Mock/Real Service 公共接口和 DTO/Domain Adapter 边界。
+- 决定首批自动测试范围，不在业务扩大后再补工程基线。
+
+建议下一阶段优先建立领域模型最小子集、Service 接口与 Mock 数据边界，再选择身份或视频上传中的一个垂直切片实现。
