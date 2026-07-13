@@ -6,7 +6,8 @@
 
 ```text
 apps/mobile (@tennis/mobile)
-        ├─ Expo Router 占位路由
+        ├─ Expo Router Protected Routes 与四个底部 Tab
+        ├─ React Context 本地 Demo 身份
         ├─ Mobile 主题与环境配置
         └─ import type ─┐
                         ├─ packages/shared-types
@@ -16,13 +17,23 @@ apps/web                │
         └─ Web 主题与环境配置
 ```
 
-当前页面仅验证工程、导航和路由参数，不包含身份、上传、视频数据、任务、分析结果、统计或 Mock 数据。
+Mobile 当前已具备本地 Demo 身份和基础产品导航，但不包含正式认证、上传、视频数据、任务、
+分析结果、统计或 Mock 数据。Web 页面仍仅验证工程和占位路由。
 
 ## 2. 当前前端边界
 
 ### Mobile App
 
-`apps/mobile` 面向普通网球用户。当前采用 Expo 57、React Native 0.86、Expo Router 和 TypeScript，路由位于 `app/`，公共代码位于 `src/`。已建立 Safe Area、Tab 导航、独立登录/上传/视频详情占位路由、环境读取和主题 token。
+`apps/mobile` 面向普通网球用户。当前采用 Expo 57、React Native 0.86、Expo Router 和
+TypeScript，路由位于 `app/`，公共代码位于 `src/`。根布局通过 `SafeAreaProvider` 和
+`AuthSessionProvider` 提供应用级上下文，并使用 `Stack.Protected` 将未登录可访问的登录路由
+与登录后可访问的 Tabs、上传页和视频详情页分开。四个底部 Tab 使用稳定的 Expo Router
+`Tabs`，非 Tab 页面仍由根 Stack 管理。
+
+`AuthSessionProvider` 只管理 `User | null`、派生的登录状态以及本地 `signInDemo`/`signOut`；
+不依赖路由、网络或本地存储。页面负责触发身份动作和业务导航，根路由负责访问边界，通用组件
+负责 Safe Area、滚动、按钮、卡片和空状态展示。当前身份在 App 刷新或重启后丢失，是阶段 3
+的本地演示能力，不是正式认证。
 
 ### Web Dashboard
 

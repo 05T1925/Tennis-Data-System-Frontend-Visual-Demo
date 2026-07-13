@@ -9,7 +9,16 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textSecondary,
-        tabBarStyle: { borderTopColor: theme.colors.border },
+        tabBarLabelStyle: {
+          fontSize: theme.fontSizes.sm,
+          fontWeight: theme.fontWeights.bold,
+        },
+        tabBarStyle: {
+          minHeight: 64,
+          paddingTop: theme.spacing.sm,
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.border,
+        },
       }}
     >
       <Tabs.Screen name="index" options={{ title: '首页' }} />

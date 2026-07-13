@@ -1,40 +1,45 @@
-import type { Href } from 'expo-router';
-import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { PropsWithChildren, ReactNode } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import type { AppSurface } from '@tennis/shared-types';
 
 import { theme } from '@/theme/tokens';
 
-type PageLink = {
-  href: Href;
-  label: string;
-};
+type PageShellProps = PropsWithChildren<{
+  title?: string;
+  description?: string;
+  eyebrow?: string;
+  footer?: ReactNode;
+  edges?: Edge[];
+}>;
 
-type PageShellProps = {
-  title: string;
-  description: string;
-  links?: PageLink[];
-};
+const tabPageEdges: Edge[] = ['top', 'left', 'right'];
 
-const surface: AppSurface = 'mobile';
-
-export function PageShell({ title, description, links = [] }: PageShellProps) {
+export function PageShell({
+  children,
+  title,
+  description,
+  eyebrow,
+  footer,
+  edges = tabPageEdges,
+}: PageShellProps) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <View style={styles.container}>
-        <Text style={styles.eyebrow}>{surface} / stage 1</Text>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        {links.map((link) => (
-          <Link key={link.label} href={link.href} asChild>
-            <Pressable style={styles.link}>
-              <Text style={styles.linkText}>{link.label}</Text>
-            </Pressable>
-          </Link>
-        ))}
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={edges}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {(eyebrow || title || description) && (
+          <View style={styles.header}>
+            {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+            {title ? <Text style={styles.title}>{title}</Text> : null}
+            {description ? <Text style={styles.description}>{description}</Text> : null}
+          </View>
+        )}
+        <View style={styles.body}>{children}</View>
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -44,38 +49,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: theme.spacing.xl,
-    gap: theme.spacing.md,
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: theme.layout.pagePadding,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxl,
+  },
+  header: {
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
   },
   eyebrow: {
     color: theme.colors.primary,
     fontSize: theme.fontSizes.sm,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontWeight: theme.fontWeights.bold,
   },
   title: {
     color: theme.colors.text,
     fontSize: theme.fontSizes.xxl,
-    fontWeight: '800',
+    fontWeight: theme.fontWeights.extraBold,
   },
   description: {
     color: theme.colors.textSecondary,
     fontSize: theme.fontSizes.md,
     lineHeight: 24,
   },
-  link: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radii.md,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+  body: {
+    flex: 1,
+    gap: theme.spacing.xl,
   },
-  linkText: {
-    color: theme.colors.surface,
-    fontSize: theme.fontSizes.md,
-    fontWeight: '700',
+  footer: {
+    marginTop: theme.spacing.xl,
   },
 });
