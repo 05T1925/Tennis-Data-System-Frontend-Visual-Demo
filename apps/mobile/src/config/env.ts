@@ -1,5 +1,6 @@
 // EXPO_PUBLIC_* values are embedded in the client bundle and must never contain secrets.
 export type HomeMockScenario = 'success' | 'empty' | 'error' | 'video-error' | 'statistics-error';
+export type UploadMockScenario = 'success' | 'fail-once';
 
 const homeMockScenarios: HomeMockScenario[] = [
   'success',
@@ -15,8 +16,13 @@ export function parseHomeMockScenario(value: string | undefined): HomeMockScenar
     : 'success';
 }
 
+export function parseUploadMockScenario(value: string | undefined): UploadMockScenario {
+  return value === 'fail-once' ? 'fail-once' : 'success';
+}
+
 export const env = {
   apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1',
   useMock: process.env.EXPO_PUBLIC_USE_MOCK === 'true',
   homeMockScenario: parseHomeMockScenario(process.env.EXPO_PUBLIC_HOME_MOCK_SCENARIO),
+  uploadMockScenario: parseUploadMockScenario(process.env.EXPO_PUBLIC_UPLOAD_MOCK_SCENARIO),
 } as const;

@@ -20,4 +20,5 @@ export const videoService = new MockVideoService(
   demoDataRepository,
   systemClock,
   createIdGenerator(systemClock),
+  env.uploadMockScenario,
 );

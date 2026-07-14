@@ -1,6 +1,6 @@
-import type { AppError, UploadStatus, Video } from '@tennis/shared-types';
+import type { AppError, Video } from '@tennis/shared-types';
 
-import type { HomeMockScenario } from '@/config/env';
+import type { HomeMockScenario, UploadMockScenario } from '@/config/env';
 import type { DemoDataRepository } from '@/features/demo-data/DemoDataRepository';
 import { createDemoDataError, throwIfAborted, waitForDemoDelay } from '@/features/demo-data/errors';
 import { DEFAULT_UPLOAD_DURATION_MS } from '@/features/demo-data/transitions';
@@ -16,11 +16,11 @@ import type {
   StartUploadOptions,
   VideoService,
 } from './VideoService';
+import { getUploadStartDecision } from './uploadMockScenario';
 
 const MOCK_DELAY_MS = 700;
 const DEFAULT_LIMIT = 3;
 const MAX_LIMIT = 3;
-const RESTARTABLE_UPLOAD_STATUSES: UploadStatus[] = ['idle', 'failed', 'canceled'];
 
 function createVideoQueryError(): AppError {
   return {
@@ -80,6 +80,7 @@ export class MockVideoService implements VideoService {
     private readonly repository: DemoDataRepository,
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
+    private readonly uploadScenario: UploadMockScenario = 'success',
   ) {}
 
   private async findOwnedVideo(userId: string, videoId: string, signal?: AbortSignal) {
@@ -151,8 +152,9 @@ export class MockVideoService implements VideoService {
 
   async startUpload({ userId, videoId, signal }: StartUploadOptions) {
     const owned = await this.findOwnedVideo(userId, videoId, signal);
-    if (owned.uploadStatus === 'uploading') return owned;
-    if (!RESTARTABLE_UPLOAD_STATUSES.includes(owned.uploadStatus)) {
+    const initialDecision = getUploadStartDecision(this.uploadScenario, owned.uploadStatus);
+    if (initialDecision.kind === 'idempotent') return owned;
+    if (initialDecision.kind === 'reject') {
       throw createDemoDataError('UPLOAD_NOT_ALLOWED', { retryable: false });
     }
     const now = this.clock.now().toISOString();
@@ -160,8 +162,9 @@ export class MockVideoService implements VideoService {
       (current) => {
         const latest = current.videos.find((video) => video.id === owned.id);
         if (!latest) throw createDemoDataError('VIDEO_NOT_FOUND', { retryable: false });
-        if (latest.uploadStatus === 'uploading') return current;
-        if (!RESTARTABLE_UPLOAD_STATUSES.includes(latest.uploadStatus)) {
+        const decision = getUploadStartDecision(this.uploadScenario, latest.uploadStatus);
+        if (decision.kind === 'idempotent') return current;
+        if (decision.kind === 'reject') {
           throw createDemoDataError('UPLOAD_NOT_ALLOWED', { retryable: false });
         }
         return {
@@ -178,7 +181,7 @@ export class MockVideoService implements VideoService {
               [owned.id]: {
                 startedAt: now,
                 durationMs: DEFAULT_UPLOAD_DURATION_MS,
-                outcome: 'succeeded',
+                outcome: decision.outcome,
               },
             },
           },

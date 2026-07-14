@@ -8,6 +8,7 @@
 apps/mobile (@tennis/mobile)
         ├─ Expo Router Protected Routes 与四个底部 Tab
         ├─ TanStack Query Provider 与首页独立 Query
+        ├─ 相册视频选择、上传表单与 Upload Query/Mutation workflow
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
         ├─ VideoService / MockVideoService ──────┐
@@ -29,7 +30,8 @@ apps/web                │
 ```
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
-Service 底座。完整上传、视频列表、详情、分析结果和统计页面仍未接入业务；Web 页面仍仅验证
+Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；完整
+视频列表、详情、分析结果和统计页面仍未接入业务；Web 页面仍仅验证
 工程和占位路由。
 
 ## 2. 当前前端边界
@@ -90,6 +92,19 @@ reconcile：上传完成原子创建唯一 Task，分析完成原子创建唯一
 当前没有 Real VideoService、Real AnalysisService 或 Real StatisticsService。未来接入 API 时应在
 Service 边界增加 DTO 与 Adapter，处理 snake_case 到 camelCase，保持页面、Query Hook 和领域
 消费模型不变；Real Service 不复用 Demo Repository。
+
+阶段 7 新增独立 Upload feature。`useVideoPicker` 通过 expo-image-picker 请求或确认相册权限，只
+允许单选 MP4/MOV 视频；expo-file-system 仅在 Picker 缺少大小时通过 `File.size` 读取元数据，
+不会读取完整视频内容。相机和麦克风权限由 config plugin 显式关闭，页面不调用相机 API。Android
+pending result 与用户主动重新选择共享同一最新请求序号，旧结果不会覆盖更新的页面草稿。
+
+Picker URI 只保存在上传页面的内存草稿中，不进入 CreateVideoInput、DemoDataRepository、
+AsyncStorage、storagePath 或 playbackUrl。React Hook Form 与 Zod 负责业务字段，Upload workflow
+通过 TanStack Mutation 调用既有 createVideo/startUpload，通过 500ms detail Query 调用
+getVideoById 观察阶段 6惰性进度。离开保护使用 Expo Router 对应的 `usePreventRemove`，同一时刻
+只允许一组确认提示，成功 replace 前临时 bypass。上传完成仍由 Repository 原子创建唯一
+AnalysisTask，页面不调用 startAnalysis。成功后只精确失效视频、首页和 task keys，并 replace 到现
+有详情骨架。
 
 ### Web Dashboard
 
