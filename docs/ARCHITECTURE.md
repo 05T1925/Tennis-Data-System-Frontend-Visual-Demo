@@ -10,8 +10,14 @@ apps/mobile (@tennis/mobile)
         ├─ TanStack Query Provider 与首页独立 Query
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
-        ├─ VideoService / MockVideoService
-        ├─ StatisticsService / MockStatisticsService
+        ├─ VideoService / MockVideoService ──────┐
+        ├─ AnalysisService / MockAnalysisService ├─ DemoDataRepository
+        ├─ StatisticsService / MockStatisticsService ─┘
+        │                                  ├─ 内存 Snapshot + 写队列
+        │                                  ├─ Zod Runtime Schema
+        │                                  ├─ AsyncStorage tennis.demo.data.v1
+        │                                  ├─ Seed / Factory / Clock / ID
+        │                                  └─ 惰性上传与分析状态推进
         ├─ Zod 校验与 AsyncStorage Session 持久化
         ├─ Mobile 主题与环境配置
         └─ import type ─┐
@@ -22,10 +28,9 @@ apps/web                │
         └─ Web 主题与环境配置
 ```
 
-Mobile 当前已具备可恢复的 Mock 登录闭环、基础产品导航和由确定性 Mock 查询驱动的首页产品
-切片。首页包含当前用户问候、上传入口、拍摄建议、四项累计统计、最近分析和最近 3 条视频，并
-覆盖 loading、empty、error、success 与单查询失败。完整上传、视频列表、详情、分析结果和统计
-页面仍未实现。Web 页面仍仅验证工程和占位路由。
+Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
+Service 底座。完整上传、视频列表、详情、分析结果和统计页面仍未接入业务；Web 页面仍仅验证
+工程和占位路由。
 
 ## 2. 当前前端边界
 
@@ -63,8 +68,28 @@ Mock 视频和统计只对固定 Demo User 返回数据，未知 userId 分别�
 Mock 延迟在正常完成和 Abort 时都会移除 listener，Abort 时同时清除 timeout。Home Query Hook
 保留取消异常，并将其他未知异常归一化为 AppError，因此 UI 只展示安全 userMessage。
 
-当前没有 Real VideoService 或 Real StatisticsService。未来接入 API 时应在 Service 边界增加 DTO
-与 Adapter，处理 snake_case 到 camelCase，保持页面、Query Hook 和领域消费模型不变。
+阶段 6 增加唯一模块级 DemoDataRepository。MockVideoService、MockAnalysisService 和
+MockStatisticsService 通过构造函数共享该实例，不需要 React Provider。Repository 保存 version 1
+Snapshot，通过 Zod 校验 Video、AnalysisTask、AnalysisResult、runtime 和关联关系；独立
+AsyncStorage key 为 `tennis.demo.data.v1`，与 Auth key 完全隔离。
+
+Repository 使用单一初始化 Promise 与 Promise 写队列。候选 Snapshot 在 Zod 校验和持久化成功后
+才替换内存，保存失败不会产生部分内存提交。无数据创建确定性 Seed；损坏 JSON、错误版本或
+Schema 失败会单次回退 Seed，不递归重试。普通初始化读取/写入失败会释放 rejected 初始化
+Promise，后续调用可以重试。reset 只覆盖 Demo key，不清理 Auth。
+
+Runtime Schema 同时约束 active 实体必须具有 runtime、terminal 实体不得保留 runtime、状态/阶段/
+进度一致、Result 必须对应 succeeded Task、summary 数量与数组一致，以及 Shot/Rally/Point 双向
+引用。候选 Snapshot 校验失败统一映射为 Repository AppError，不向 Service 泄漏 ZodError。
+
+上传和分析使用 persisted startedAt 的惰性时间推进，不使用后台 Timer。每次 Repository 访问会
+reconcile：上传完成原子创建唯一 Task，分析完成原子创建唯一 Result；App 重启后下一次访问自动
+追赶。系统时间倒退时已持久化进度不回退。测试注入可变 Clock、顺序 ID 与 Memory Storage，不
+依赖真实等待或原生 AsyncStorage。
+
+当前没有 Real VideoService、Real AnalysisService 或 Real StatisticsService。未来接入 API 时应在
+Service 边界增加 DTO 与 Adapter，处理 snake_case 到 camelCase，保持页面、Query Hook 和领域
+消费模型不变；Real Service 不复用 Demo Repository。
 
 ### Web Dashboard
 
@@ -98,9 +123,10 @@ CV Output / Analysis Result / Statistics
 - Backend：计划负责身份、视频、任务、权限、API 与存储协作，尚未创建。
 - CV Module：计划产生球场、球员、球和轨迹等原始输出，尚未创建。
 - Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
-- Auth 范围已接入 Mock Service、React Hook Form、Zod 和 AsyncStorage；Mobile 首页已接入
-  TanStack Query、VideoService、StatisticsService 及确定性 Mock 实现。Real Service、业务 DTO
-  Adapter、Zustand、Ant Design 和 Recharts 均尚未接入。
+- Auth 范围已接入 Mock Service、React Hook Form、Zod 和独立 AsyncStorage Session；Mobile 已
+  接入 TanStack Query、统一 Demo Repository、Video/Analysis/Statistics Mock Service 和 Vitest
+  纯 TypeScript 状态测试。Real Service、业务 DTO Adapter、Zustand、Ant Design 和 Recharts 均
+  尚未接入。
 
 ## 4. 分层原则
 
