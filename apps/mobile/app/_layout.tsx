@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthSessionProvider, useAuthSession } from '@/features/auth';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { theme } from '@/theme/tokens';
 
 function RootNavigator() {
@@ -50,10 +51,12 @@ const styles = StyleSheet.create({
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthSessionProvider>
-        <StatusBar style="dark" />
-        <RootNavigator />
-      </AuthSessionProvider>
+      <QueryProvider>
+        <AuthSessionProvider>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </AuthSessionProvider>
+      </QueryProvider>
     </SafeAreaProvider>
   );
 }

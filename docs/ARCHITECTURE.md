@@ -7,8 +7,11 @@
 ```text
 apps/mobile (@tennis/mobile)
         ├─ Expo Router Protected Routes 与四个底部 Tab
+        ├─ TanStack Query Provider 与首页独立 Query
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
+        ├─ VideoService / MockVideoService
+        ├─ StatisticsService / MockStatisticsService
         ├─ Zod 校验与 AsyncStorage Session 持久化
         ├─ Mobile 主题与环境配置
         └─ import type ─┐
@@ -19,8 +22,10 @@ apps/web                │
         └─ Web 主题与环境配置
 ```
 
-Mobile 当前已具备可恢复的 Mock 登录闭环和基础产品导航，但不包含正式认证、上传、视频数据、
-任务、分析结果或统计业务。Web 页面仍仅验证工程和占位路由。
+Mobile 当前已具备可恢复的 Mock 登录闭环、基础产品导航和由确定性 Mock 查询驱动的首页产品
+切片。首页包含当前用户问候、上传入口、拍摄建议、四项累计统计、最近分析和最近 3 条视频，并
+覆盖 loading、empty、error、success 与单查询失败。完整上传、视频列表、详情、分析结果和统计
+页面仍未实现。Web 页面仍仅验证工程和占位路由。
 
 ## 2. 当前前端边界
 
@@ -42,6 +47,24 @@ Session 使用 `tennis.auth.session.v1` key，并在持久化对象内部保存 
 启动恢复完成前根布局不挂载受保护路由，避免登录页或主应用闪烁。损坏 Session 会尝试清理，
 清理失败也会结束恢复并回到登录页。该能力仍是公开 Demo 凭据构成的 Mock 认证，不具备正式
 认证安全性。
+
+根 Provider 在 `SafeAreaProvider` 与 `AuthSessionProvider` 之间加入独立 `QueryProvider`。
+`QueryClient` 只稳定创建一次；默认关闭自动 retry，`staleTime` 为 60 秒，缓存回收时间为 30
+分钟。QueryProvider 不读取或修改 Auth，恢复完成前首页不会挂载，也不会提前查询。
+
+首页使用两个包含 `userId` 的独立 Query：最近视频与首页统计。一个请求失败不会覆盖另一个的
+成功数据，手动重试只 refetch 失败分区。VideoService 负责最近视频排序和 limit，
+StatisticsService 负责累计统计、最近分析投影和数值归一化；页面不得直接读取 Mock 数据或从
+最近 3 条视频推算总统计。当前 Mock 场景为固定 700 ms 延迟，并支持 success、empty、error、
+video-error 和 statistics-error。错误场景首次失败后可通过真实 refetch 恢复，不使用随机失败。
+Mock 视频和统计只对固定 Demo User 返回数据，未知 userId 分别返回空视频和零统计，避免把 Demo
+用户数据无条件暴露给其他查询身份。被取消和未知身份的请求不会消耗首次失败次数。
+
+Mock 延迟在正常完成和 Abort 时都会移除 listener，Abort 时同时清除 timeout。Home Query Hook
+保留取消异常，并将其他未知异常归一化为 AppError，因此 UI 只展示安全 userMessage。
+
+当前没有 Real VideoService 或 Real StatisticsService。未来接入 API 时应在 Service 边界增加 DTO
+与 Adapter，处理 snake_case 到 camelCase，保持页面、Query Hook 和领域消费模型不变。
 
 ### Web Dashboard
 
@@ -75,8 +98,9 @@ CV Output / Analysis Result / Statistics
 - Backend：计划负责身份、视频、任务、权限、API 与存储协作，尚未创建。
 - CV Module：计划产生球场、球员、球和轨迹等原始输出，尚未创建。
 - Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
-- Auth 范围已接入 Mock Service、React Hook Form、Zod 和 AsyncStorage；业务数据的 Mock/Real
-  Service、Adapter、TanStack Query、Zustand、Ant Design 和 Recharts 均尚未接入。
+- Auth 范围已接入 Mock Service、React Hook Form、Zod 和 AsyncStorage；Mobile 首页已接入
+  TanStack Query、VideoService、StatisticsService 及确定性 Mock 实现。Real Service、业务 DTO
+  Adapter、Zustand、Ant Design 和 Recharts 均尚未接入。
 
 ## 4. 分层原则
 
@@ -90,6 +114,7 @@ CV Output / Analysis Result / Statistics
 
 - Mobile 通过静态属性读取 `EXPO_PUBLIC_*`；Web 通过 `import.meta.env.VITE_*` 读取环境变量。
 - 两类公开前缀都会进入客户端，不得保存任何密钥、密码或管理员凭据。
+- Mobile 的已跟踪 `.env.example` 提供公开首页 Mock 场景默认值；真实 `.env` 不读取、不提交。
 - pnpm 11 仅允许 `unrs-resolver` 执行安装构建脚本，配置位于 `pnpm-workspace.yaml` 的 `allowBuilds`。
 
 ## 6. 待确认事项

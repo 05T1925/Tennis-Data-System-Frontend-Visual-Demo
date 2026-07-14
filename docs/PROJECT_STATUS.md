@@ -4,101 +4,105 @@
 
 ## 当前阶段
 
-阶段 4：满足 Demo 阶段提交条件，等待 Git 提交。
-
-当前分支：`feature/stage-04-mobile-auth-closure`
+阶段 5-C：Mobile 首页实际代码检查、必要修正与提交前收口已完成。阶段 5 满足 Demo 提交条件，
+等待用户执行 Git 提交。当前分支为 `feature/stage-05-mobile-home`，改动保持未提交和未暂存。
 
 ## 状态摘要
 
-Mobile 在阶段 3 的单一 `AuthSessionProvider` 和 `Stack.Protected` 基础上，新增邮箱密码 Mock
-登录、Demo 快捷登录、React Hook Form + Zod 校验、固定网络错误场景、AsyncStorage Session
-持久化、启动恢复和一致的异步退出流程。Session key 与对象内部均有 v1 版本；不保存密码。
+Mobile 在阶段 4 的 Mock 登录、Session 持久化和 Protected Routes 基础上，新增 TanStack Query
+Provider、VideoService、StatisticsService 和确定性 Mock 实现。已登录用户首页现在显示当前身份
+问候、上传入口、拍摄建议、累计视频/击球/回合/训练时长、最近分析和最近 3 条视频。
 
-该能力只使用公开 Demo 凭据和 Mock token，不连接真实 Backend，也不具备正式认证安全性。上传、
-视频列表、分析任务、结果和统计仍是页面骨架。
+首页真实覆盖 loading、empty、error、success，以及视频或统计单查询失败。错误场景首次失败后
+可通过 Query refetch 成功恢复，不依赖 App 重启。当前仍然只有 Mock 数据，没有 Real API、
+Backend、CV 或数据库。
 
-项目当前为 Demo，用户决定不执行阶段 4 人工交互验收，并以代码实现、自动验证、Android
-export、Metro 启动和独立静态审查作为本阶段提交依据。人工交互验收状态为“未执行”，不得理解
-为通过。
-
-阶段 4-C 独立审查发现持久化 User 时间字段只校验非空字符串、认证输入未显式关闭自动更正。
-阶段 4-B2 已分别改为 Zod ISO 8601 datetime 校验和 `autoCorrect={false}`，阶段 4-C2 静态代码
-复审已通过。阶段 4-B3 将范围外用户目录 `other_docs/` 加入 `.prettierignore`，根格式门禁不再
-扫描该目录；其中的用户文件没有被修改或格式化。
+阶段 5-C 检查发现阶段 5-B 的 Mock Service 会向任意非空 userId 返回同一份 Demo 数据，并且
+Query 对未知异常只依赖静态错误泛型。现已改为仅固定 Demo User 可获得 Mock 私有数据，未知用户
+返回空数据；非取消异常在 Query 边界归一化为 AppError。Abort listener 清理也改为显式执行。
 
 ## 模块状态
 
-| 模块                           | 状态                  | 真实说明                                                        |
-| ------------------------------ | --------------------- | --------------------------------------------------------------- |
-| Mobile App                     | ✅ 满足 Demo 提交条件 | Mock 登录闭环已实现；自动验证、构建、启动与独立静态审查已完成。 |
-| Web Dashboard                  | ✅ 脚手架已验证       | 本阶段未修改；Vite 构建通过，页面仍为占位页。                   |
-| shared-types                   | ✅ 核心模型已建立     | 本阶段未修改；Mobile Auth 复用既有 `User` 和 `AppError`。       |
-| Backend / CV / Data Processing | ⏳ 尚未实现           | 未创建。                                                        |
-| 业务 Mock Service / Real API   | ⏳ 尚未实现           | 仅 Auth Mock Service 已实现；视频与分析业务 Service 尚未接入。  |
+| 模块                           | 状态                   | 真实说明                                               |
+| ------------------------------ | ---------------------- | ------------------------------------------------------ |
+| Mobile Auth                    | ✅ 阶段 4 能力保持     | 本阶段未修改 Auth、Session、登录、恢复或退出。         |
+| Mobile 首页                    | ✅ Mock 产品切片已实现 | 两个独立 Query 与完整四态；人工交互验收未执行。        |
+| Mobile 视频/上传/详情/统计 Tab | ⏳ 仍为骨架            | 本阶段只导航到既有页面，没有扩展其业务。               |
+| Web Dashboard                  | ✅ 脚手架构建已验证    | 源码未修改，页面仍为占位。                             |
+| shared-types                   | ✅ 核心模型保持        | 复用 Video、AnalysisStatus、AppError，没有修改共享包。 |
+| Backend / CV / Data Processing | ⏳ 尚未实现            | 未创建。                                               |
+| Real Service / API             | ⏳ 尚未实现            | 当前 Video/Statistics 只有确定性 Mock Service。        |
 
-## Mobile Auth 当前能力
+## Mobile 首页当前能力
 
-- 登录表单使用 React Hook Form 和 Zod，处理邮箱 trim/小写、邮箱格式、密码最短 8 位和协议必选。
-- 密码可以显示或隐藏，切换不会重置字段内容。
-- 成功账号为 `demo@tennis.local` / `TennisDemo123!`。
-- 固定网络错误账号为 `network@tennis.local` / `NetworkDemo123!`。
-- 其他格式正确但不匹配的凭据返回 `INVALID_CREDENTIALS`。
-- 普通登录与 Demo 登录使用同一 Provider、AuthService、持久化和错误处理流程。
-- Provider 公开恢复/认证状态、当前操作、`AppError`、登录、Demo 登录、退出和错误清理能力。
-- 登录请求共享同步占用锁；普通登录、Demo 登录和退出不会并发执行。
-- storage key 为 `tennis.auth.session.v1`，对象包含 `version: 1`、Mock token 和 `User`。
-- Session 中 `User.createdAt` 和 `User.updatedAt` 使用 Zod ISO 8601 datetime 运行时校验。
-- 邮箱和密码共用的认证输入组件显式关闭系统自动更正。
-- 启动恢复期间不挂载受保护路由；有效 Session 恢复登录，损坏 Session 尝试清理后回到登录页。
-- 保存失败不会进入登录态；退出清除失败会保留内存身份并显示错误。
-- 继续使用阶段 3 的单一 Auth Context、根 `Stack.Protected`、四个 Tab 和基础组件。
+- 问候使用恢复后的 Auth User，名称按 displayName、email 本地部分、`球友` 回退。
+- 上传 CTA 使用既有 `/upload` 路由，不实现文件选择或上传。
+- 拍摄建议为固定产品文案，不放在页面大数组中。
+- StatisticsService 返回四项累计统计和轻量最近分析摘要；首页不从最近视频推算总统计。
+- VideoService 按 `createdAt` 倒序并最多返回 3 条；Hook 另做防御性截取；未知 userId 返回空数组。
+- StatisticsService 只向固定 Demo User 返回 Mock 统计；未知 userId 返回零统计和空最近分析。
+- 最近视频可导航到既有 `/videos/[videoId]`，空 ID 不触发导航。
+- Service 支持 AbortSignal；页面卸载或退出后 Query 可取消未完成的 Mock 延迟。
+- Abort 会清除 timeout 和 listener，不消耗确定性首次失败次数。
+- 数值边界将负数、NaN 和 Infinity 归一化为 0；日期、标题和未知状态安全降级。
+- 小屏页面可滚动；统计卡片在窄屏或较大字体下改为单列。
+
+## Query 与 Mock
+
+- 根 Provider 顺序为 SafeAreaProvider → QueryProvider → AuthSessionProvider → RootNavigator。
+- QueryClient 稳定创建一次；retry 为 false，staleTime 为 60 秒，gcTime 为 30 分钟。
+- Query keys 为 `['home', 'recentVideos', userId, 3]` 和
+  `['home', 'overview', userId]`。
+- 两个 Query 独立；单查询失败不会抹掉另一个成功结果。
+- 支持 `success`、`empty`、`error`、`video-error`、`statistics-error`；未知值回退
+  `success`。
+- Mock 延迟固定 700 ms，不使用随机数据、随机延迟或随机错误。
+- `error`、`video-error`、`statistics-error` 仅对应查询首次失败，手动 refetch 后成功。
 
 ## 新增依赖
 
-| 依赖                                        | 版本      | 用途                                      |
-| ------------------------------------------- | --------- | ----------------------------------------- |
-| `@react-native-async-storage/async-storage` | `2.2.0`   | 持久化 Mock Session；通过 Expo 兼容安装。 |
-| `react-hook-form`                           | `^7.81.0` | 登录表单状态与提交管理。                  |
-| `zod`                                       | `^4.4.3`  | 表单和持久化 Session 运行时校验。         |
-| `@hookform/resolvers`                       | `^5.4.0`  | 连接 React Hook Form 与 Zod。             |
+| 依赖                    | 版本      | 用途                            |
+| ----------------------- | --------- | ------------------------------- |
+| `@tanstack/react-query` | `5.101.2` | Mobile 服务端状态、缓存和重试。 |
 
-只有根 `pnpm-lock.yaml`，没有生成 `package-lock.json`、`yarn.lock` 或 Mobile 嵌套锁文件。环境
-变量没有变化。
+阶段 5-B 只修改 Mobile `package.json` 和根 `pnpm-lock.yaml`，没有额外锁文件。阶段 5-C 未修改
+依赖或锁文件；只在已有、已跟踪的 `apps/mobile/.env.example` 增加公开 Demo 场景默认值。真实
+`.env` 没有读取或修改。
 
 ## 自动验证状态
 
+- Mobile dependency list：通过，确认 React Query 5.101.2。
 - Mobile lint：通过。
-- Mobile typecheck：初次发现协议字段初始值类型冲突；修正 Schema 后复验通过。
+- Mobile typecheck：通过。
 - 根 lint：通过。
 - 根 typecheck：通过。
-- Web build：通过。
-- Expo Android export：通过，共生成 29 个临时文件；验证后临时目录已删除。
-- Metro 启动：`packager-status:running`；主动关闭后 8081 监听数为 0。
-- 根 `pnpm format:check`：阶段 4-B3 通过；`other_docs/` 已作为范围外用户材料目录由
-  `.prettierignore` 排除，没有格式化其中的文件。
-- B3 清单中的显式 `.prettierignore` 定向 Prettier 首次退出 1，因为 Prettier 3.9.5 无法为
-  ignore 文件推断 parser；两份 B3 文档改为单独定向检查，ignore 规则通过精确 diff 和成功的根
-  format check 验证。
-- 当前没有测试框架或测试命令，因此未执行自动化测试，也不声称测试通过。
-- 阶段 4 人工交互验收未执行；项目当前为 Demo，用户决定不将其作为本阶段提交条件。
-- 阶段 4-B2 的定向 Prettier、Mobile/根 lint 和 typecheck、Web build、Android export 与 Metro
-  启动复验均通过；Android export 仍为 1406 个模块和 29 个输出文件，临时目录已删除；Metro
-  结束后 8081 无监听。阶段 4-C2 独立静态代码复审已通过。
-- 阶段 4-B3 的根 lint/typecheck 和 Web build 复验通过；未修改运行时代码，因此未重复 Android
-  export 或 Metro。
+- 根 format check：通过，所有匹配文件符合 Prettier。
+- Web build：通过，Vite 转换 35 个模块。
+- Mock 场景运行探测：通过，五个场景和 unknown 回退均符合设计；AbortSignal 取消通过。
+- 阶段 5-C 隔离/取消探测：通过；未知用户为空、Abort 不消耗首次失败、正常/取消 listener 均
+  add 1/remove 1，limit 边界符合预期。
+- 修正后 Expo Android export：通过，1466 个模块、29 个输出文件；临时目录已删除。
+- 修正后 Metro：`packager-status:running`；结束后 8081 监听数为 0，临时日志已删除。
+- `git diff --check`：通过，无空白错误。
+- 当前没有测试框架或测试命令，因此未执行自动化测试，不声称测试通过。
+- 人工交互验收未执行。
+- 用户决定当前 Demo 阶段以实际代码检查、场景探测、构建和启动验证作为提交依据；这不等同于
+  人工交互验收通过。
 
 ## 当前限制与风险
 
-- Mock 凭据和 token 均为公开演示数据，AsyncStorage 方案不代表正式凭据安全存储。
-- 没有真实 Token 签发、过期、Refresh Token、注册、找回密码或真实后端认证。
-- Session 保存失败、删除失败、损坏清理失败和非法 ISO Session 故障注入均未执行。
-- 仓库没有自动化测试框架或测试命令，因此未执行自动化测试。
-- `other_docs/` 是范围外用户材料目录，已从 Prettier 检查和格式化范围中整体排除。
-- 阶段 4 人工交互验收未执行，这是用户针对当前 Demo 阶段作出的范围决定。
-- 上传、视频、分析、CV、结果和统计业务仍未实现。
+- 当前首页数据和错误均为本地 Mock，不代表真实后端行为。
+- 场景配置在 JS 进程启动时读取；切换场景需要重启本轮 Metro。
+- React Native 前后台 focusManager 集成本阶段未实现；缓存 stale 后会在正常重新挂载或手动操作时
+  按 Query 策略处理。
+- Query cache 未在退出时主动清空，但 query key 包含 userId，不会把一个身份的数据渲染到另一
+  身份；正式认证阶段仍应补充缓存清理策略。
+- 未在 Android/iOS 真机或模拟器执行人工视觉和交互验收。
+- 根 README 的阶段 1 摘要仍然滞后；本阶段按禁止范围未修改。
+- 完整视频列表、真实上传、详情业务、分析任务、结果页、统计 Tab 和 Web 业务仍未实现。
 
 ## 下一阶段前置条件
 
-- 阶段 4 当前满足 Demo 阶段提交条件，等待用户执行 Git 提交。
-- 后续若提升到正式认证或发布级质量，需要补充自动化测试、故障注入和目标平台交互验收。
-- 下一业务阶段应选择视频上传或视频列表中的单一切片，并先确认 Service、DTO、Adapter 和状态边界。
+- 阶段 5 已满足 Demo 提交条件，等待用户执行 Git 提交和推送。
+- 如需提高发布质量，应补充真机人工交互和自动化测试，而不是将当前未执行项写成通过。
+- 下一业务阶段继续选择单一切片，不同时扩展上传、完整视频列表、分析和统计页。
