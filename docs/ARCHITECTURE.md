@@ -7,7 +7,9 @@
 ```text
 apps/mobile (@tennis/mobile)
         ├─ Expo Router Protected Routes 与四个底部 Tab
-        ├─ React Context 本地 Demo 身份
+        ├─ React Context Mock Session 状态与流程编排
+        ├─ AuthService / MockAuthService
+        ├─ Zod 校验与 AsyncStorage Session 持久化
         ├─ Mobile 主题与环境配置
         └─ import type ─┐
                         ├─ packages/shared-types
@@ -17,8 +19,8 @@ apps/web                │
         └─ Web 主题与环境配置
 ```
 
-Mobile 当前已具备本地 Demo 身份和基础产品导航，但不包含正式认证、上传、视频数据、任务、
-分析结果、统计或 Mock 数据。Web 页面仍仅验证工程和占位路由。
+Mobile 当前已具备可恢复的 Mock 登录闭环和基础产品导航，但不包含正式认证、上传、视频数据、
+任务、分析结果或统计业务。Web 页面仍仅验证工程和占位路由。
 
 ## 2. 当前前端边界
 
@@ -30,10 +32,16 @@ TypeScript，路由位于 `app/`，公共代码位于 `src/`。根布局通过 `
 与登录后可访问的 Tabs、上传页和视频详情页分开。四个底部 Tab 使用稳定的 Expo Router
 `Tabs`，非 Tab 页面仍由根 Stack 管理。
 
-`AuthSessionProvider` 只管理 `User | null`、派生的登录状态以及本地 `signInDemo`/`signOut`；
-不依赖路由、网络或本地存储。页面负责触发身份动作和业务导航，根路由负责访问边界，通用组件
-负责 Safe Area、滚动、按钮、卡片和空状态展示。当前身份在 App 刷新或重启后丢失，是阶段 3
-的本地演示能力，不是正式认证。
+`AuthSessionProvider` 保留阶段 3 的单一 Auth Context，只负责 `restoring`、`authenticated`、
+`unauthenticated` 状态以及登录、恢复和退出编排。认证行为由 `AuthService` 定义，当前
+`MockAuthService` 使用固定延迟和固定账号场景；AsyncStorage 的具体读写、Zod Session 校验和
+错误映射均位于独立模块。页面负责表单和交互，不直接访问 Service 或 Storage。
+
+Session 使用 `tennis.auth.session.v1` key，并在持久化对象内部保存 `version: 1`、Mock token 和
+`User`；不保存密码。Provider 保存 Session 成功后才进入登录态，退出清理成功后才清除内存身份。
+启动恢复完成前根布局不挂载受保护路由，避免登录页或主应用闪烁。损坏 Session 会尝试清理，
+清理失败也会结束恢复并回到登录页。该能力仍是公开 Demo 凭据构成的 Mock 认证，不具备正式
+认证安全性。
 
 ### Web Dashboard
 
@@ -67,7 +75,8 @@ CV Output / Analysis Result / Statistics
 - Backend：计划负责身份、视频、任务、权限、API 与存储协作，尚未创建。
 - CV Module：计划产生球场、球员、球和轨迹等原始输出，尚未创建。
 - Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
-- Mock/Real Service、Adapter、TanStack Query、Zustand、React Hook Form、Zod、Ant Design 和 Recharts 均尚未接入。
+- Auth 范围已接入 Mock Service、React Hook Form、Zod 和 AsyncStorage；业务数据的 Mock/Real
+  Service、Adapter、TanStack Query、Zustand、Ant Design 和 Recharts 均尚未接入。
 
 ## 4. 分层原则
 
@@ -85,7 +94,7 @@ CV Output / Analysis Result / Statistics
 
 ## 6. 待确认事项
 
-- 身份、对象存储、上传方式、任务轮询/推送和失败恢复策略。
+- 正式身份服务、Token 安全存储与刷新、对象存储、上传方式、任务轮询/推送和失败恢复策略。
 - Backend、CV 与 Data Processing 的部署和版本契约。
 - API 分页、权限、错误码与最终领域模型。
 - Mobile 真机兼容性和后续测试策略。

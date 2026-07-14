@@ -3,6 +3,7 @@ node_modules
 dist
 coverage
 .expo
+other_docs/
 apps/mobile/expo-env.d.ts
 *.docx
 pnpm-lock.yaml

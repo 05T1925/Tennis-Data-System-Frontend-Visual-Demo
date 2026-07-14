@@ -1,12 +1,22 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthSessionProvider, useAuthSession } from '@/features/auth';
 import { theme } from '@/theme/tokens';
 
 function RootNavigator() {
-  const { isAuthenticated } = useAuthSession();
+  const { isAuthenticated, status } = useAuthSession();
+
+  // Protected routes must not decide between auth and app screens until restore completes.
+  if (status === 'restoring') {
+    return (
+      <View accessibilityLabel="正在恢复登录状态" style={styles.restoring}>
+        <ActivityIndicator color={theme.colors.primary} size="large" />
+      </View>
+    );
+  }
 
   return (
     <Stack
@@ -27,6 +37,15 @@ function RootNavigator() {
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  restoring: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background,
+  },
+});
 
 export default function RootLayout() {
   return (
