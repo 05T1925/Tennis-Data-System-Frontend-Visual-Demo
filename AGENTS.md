@@ -2,15 +2,21 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。阶段 1 已建立可运行的 pnpm monorepo、Expo App、Vite Web Dashboard、共享类型、占位路由、主题和检查命令；业务功能、Backend、CV 与数据处理仍未实现。
+本项目是网球视频分析系统 v0.1 的前端 Demo。当前已推进到阶段 8：Mobile 已具备 Mock 认证、首页、
+唯一持久化 DemoDataRepository、Video/Analysis/Statistics Service、模拟上传和视频列表；Backend、
+Real API、CV 与正式数据处理仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
 
 ## 当前目录与包
 
 - `apps/mobile`：`@tennis/mobile`，Expo 57、React Native、Expo Router、TypeScript。
+- `apps/mobile/src/features/demo-data`：唯一 Demo 业务数据源和持久化 Repository。
+- `apps/mobile/src/features/videos`、`analysis`、`statistics`：共享 Repository 的 Mock Service。
+- `apps/mobile/src/features/upload`：视频选择、表单和模拟上传 workflow。
 - `apps/web`：`@tennis/web-dashboard`，React、Vite、React Router、TypeScript。
-- `packages/shared-types`：`@tennis/shared-types`，直接消费 TypeScript 源码，不包含完整领域模型。
+- `packages/shared-types`：`@tennis/shared-types`，提供 v0.1 稳定核心领域类型；不包含 UI、Service、
+  DTO Adapter、运行时 Schema 或业务算法。
 - 包管理器：pnpm `11.7.0`；唯一锁文件为根 `pnpm-lock.yaml`。
 
 ## 可运行命令
@@ -18,6 +24,7 @@ v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据
 ```powershell
 pnpm install
 pnpm mobile:start
+pnpm --filter @tennis/mobile test
 pnpm web:dev
 pnpm web:build
 pnpm lint
@@ -26,13 +33,17 @@ pnpm format
 pnpm format:check
 ```
 
-当前没有测试框架或测试命令，不得声称测试已通过。
+Mobile 使用 Vitest 运行 `src/features/**/__tests__/*.test.ts`。当前没有 React Native UI 测试库；
+不得把静态 export 或纯逻辑测试写成真机交互通过。
 
 ## 产品与代码边界
 
 - App 面向普通网球用户；Web Dashboard 面向内部团队。
 - 页面负责展示和交互编排，不承载复杂业务规则。
 - 后续 Service 负责接口调用，Mock Service 与 Real Service 必须实现相同接口。
+- Video、Analysis、Statistics Mock Service 必须继续共享唯一 DemoDataRepository；不得创建第二份
+  Repository、视频数组、分析任务副本或状态机。
+- 页面和 Hook 通过公开 Service 与 canonical Query keys 访问业务数据，不直接访问 AsyncStorage。
 - Adapter 负责 API DTO 与 Domain Model 转换，尤其处理 snake_case 到 camelCase。
 - 复杂业务逻辑放在领域逻辑、hooks 或 utilities；可复用组件不得绑定单一页面。
 - Backend、CV Module 与 Data Processing 不属于当前前端脚手架。

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseUploadMockScenario } from '@/config/env';
 
-import { getUploadStartDecision } from './uploadMockScenario';
+import { getUploadStartDecision } from '../services/uploadMockScenario';
 
 describe('upload Mock scenario', () => {
   it('starts successfully in the success scenario', () => {

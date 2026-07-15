@@ -9,6 +9,7 @@ apps/mobile (@tennis/mobile)
         ├─ Expo Router Protected Routes 与四个底部 Tab
         ├─ TanStack Query Provider 与首页独立 Query
         ├─ 相册视频选择、上传表单与 Upload Query/Mutation workflow
+        ├─ 视频列表 Query、AnalysisTask useQueries 与列表 View Model
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
         ├─ VideoService / MockVideoService ──────┐
@@ -30,9 +31,9 @@ apps/web                │
 ```
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
-Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；完整
-视频列表、详情、分析结果和统计页面仍未接入业务；Web 页面仍仅验证
-工程和占位路由。
+Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；视频
+列表已经接入业务，视频详情、分析结果和完整统计页面仍未接入业务；Web 页面仍仅验证工程和占位
+路由。
 
 ## 2. 当前前端边界
 
@@ -106,6 +107,20 @@ getVideoById 观察阶段 6惰性进度。离开保护使用 Expo Router 对应�
 AnalysisTask，页面不调用 startAnalysis。成功后只精确失效视频、首页和 task keys，并 replace 到现
 有详情骨架。
 
+阶段 8 在 Videos Feature 内增加 canonical video Query keys、集中状态展示配置和私有列表 View
+Model。视频 Tab 使用一个 `listVideos` Query 查询当前用户全部视频，再对有效且去重的 videoId
+使用独立 AnalysisTask `useQueries`；单条 task pending/error 只影响对应卡片。状态筛选完全在客户端
+执行，不产生新的 Repository 访问。
+
+Videos 与 Analysis Feature 分别拥有 video list/detail、analysis task/retry 的 canonical Query key。
+Upload Feature 保留兼容 factory 并委托这些定义，实际 tuple 与阶段 7一致。PageShell 仍拥有唯一
+纵向 ScrollView，只通过可选 RefreshControl 支持下拉刷新。刷新精确 refetch 当前用户列表和活动
+task 前缀，不清空 QueryClient。
+
+失败分析任务通过现有 `retryAnalysis` Mutation 原地重试。Hook 按 videoId 隔离 AbortController、
+loading 和安全错误；成功后将返回的 queued task 直接写入对应 cache，并精确失效首页 overview。
+当前列表没有自动轮询、详情数据或 AnalysisResult 展示。
+
 ### Web Dashboard
 
 `apps/web` 面向内部团队。当前采用 React 19、Vite 8、React Router 和 TypeScript。`DashboardLayout` 只提供基础导航，各页面仅说明尚未实现的能力；没有权限保护、数据表格、图表或后台模板。
@@ -155,7 +170,8 @@ CV Output / Analysis Result / Statistics
 
 - Mobile 通过静态属性读取 `EXPO_PUBLIC_*`；Web 通过 `import.meta.env.VITE_*` 读取环境变量。
 - 两类公开前缀都会进入客户端，不得保存任何密钥、密码或管理员凭据。
-- Mobile 的已跟踪 `.env.example` 提供公开首页 Mock 场景默认值；真实 `.env` 不读取、不提交。
+- Mobile 的已跟踪 `.env.example` 提供首页、上传和视频列表的公开 Mock 场景示例；真实 `.env`
+  不读取、不提交。
 - pnpm 11 仅允许 `unrs-resolver` 执行安装构建脚本，配置位于 `pnpm-workspace.yaml` 的 `allowBuilds`。
 
 ## 6. 待确认事项

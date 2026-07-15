@@ -52,7 +52,7 @@ Consumer: App / Web Dashboard
 | 视频 | `DELETE /api/v1/videos/:videoId` | 删除视频 | App/Web Dashboard | 所有者/内部 | 幂等待确认 | Draft |
 | 任务 | `POST /api/v1/videos/:videoId/analysis` | 创建分析任务 | App/Web Dashboard | 视频所有者/内部 | 幂等待确认 | Draft |
 | 任务 | `GET /api/v1/videos/:videoId/analysis` | 查询任务与状态 | App/Web Dashboard | 所有者/内部 | 可重试 | Draft |
-| 任务 | `POST /api/v1/analysis/:taskId/retry` | 重试失败任务 | Web Dashboard | 内部 | 幂等待确认 | Draft |
+| 任务 | `POST /api/v1/analysis/:taskId/retry` | 重试失败任务 | App/Web Dashboard | 视频所有者/内部 | 幂等待确认 | Draft |
 | 结果 | `GET /api/v1/videos/:videoId/result` | 查询 Analysis Result | App/Web Dashboard | 所有者/内部 | 可重试 | Draft |
 | 结果 | `GET /api/v1/videos/:videoId/shots` | 查询 ShotRecord | App/Web Dashboard | 所有者/内部 | 可重试 | Draft |
 | 结果 | `GET /api/v1/videos/:videoId/rallies` | 查询 RallyRecord | App/Web Dashboard | 所有者/内部 | 可重试 | Draft |
@@ -94,7 +94,7 @@ Consumer: App / Web Dashboard
 
 - `POST /api/v1/videos/:videoId/analysis`：App 与 Web Dashboard 使用；权限为视频所有者或内部；路径参数为 `videoId`；请求体可为空，分析选项待确认；成功返回初始 `analysisTask`，使用 `status` 表示总体状态、`stage` 表示处理步骤；视频未上传完成时返回状态错误；无空数据情形；幂等键规则待确认。
 - `GET /api/v1/videos/:videoId/analysis`：App 与 Web Dashboard 使用；权限为所有者或内部；路径参数为 `videoId`；成功返回 `analysisTask`；尚未创建任务时返回空数据或未找到，待确认；可重试。
-- `POST /api/v1/analysis/:taskId/retry`：Web Dashboard 使用；权限为内部；路径参数为 `taskId`；请求体计划可选重试原因；成功返回新的或更新后的 `analysisTask`；不可重试状态返回状态错误；无空数据情形；幂等规则待确认。
+- `POST /api/v1/analysis/:taskId/retry`：App 与 Web Dashboard 使用；权限为视频所有者或内部；路径参数为 `taskId`；请求体计划可选重试原因；成功返回新的或更新后的 `analysisTask`；不可重试状态返回状态错误；无空数据情形；幂等规则待确认。当前 Mobile 调用仍是本地 Mock Service，不代表该后端接口已实现。
 
 ### 4.4 分析结果
 

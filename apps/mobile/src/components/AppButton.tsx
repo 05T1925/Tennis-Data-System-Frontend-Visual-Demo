@@ -8,6 +8,7 @@ type AppButtonProps = {
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
   loading?: boolean;
+  accessibilityLabel?: string;
 };
 
 export function AppButton({
@@ -16,11 +17,13 @@ export function AppButton({
   variant = 'primary',
   disabled = false,
   loading = false,
+  accessibilityLabel,
 }: AppButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}

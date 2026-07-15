@@ -1,6 +1,6 @@
 import type { AppError, Video } from '@tennis/shared-types';
 
-import type { HomeMockScenario, UploadMockScenario } from '@/config/env';
+import type { HomeMockScenario, UploadMockScenario, VideoListMockScenario } from '@/config/env';
 import type { DemoDataRepository } from '@/features/demo-data/DemoDataRepository';
 import { createDemoDataError, throwIfAborted, waitForDemoDelay } from '@/features/demo-data/errors';
 import { DEFAULT_UPLOAD_DURATION_MS } from '@/features/demo-data/transitions';
@@ -17,6 +17,7 @@ import type {
   VideoService,
 } from './VideoService';
 import { getUploadStartDecision } from './uploadMockScenario';
+import { createVideoListQueryError, VIDEO_LIST_MOCK_DELAY_MS } from './videoListMockScenario';
 
 const MOCK_DELAY_MS = 700;
 const DEFAULT_LIMIT = 3;
@@ -74,6 +75,7 @@ function validateInput(input: CreateVideoInput) {
 
 export class MockVideoService implements VideoService {
   private failedFirstRequest = false;
+  private failedFirstListRequest = false;
 
   constructor(
     private readonly scenario: HomeMockScenario,
@@ -81,6 +83,7 @@ export class MockVideoService implements VideoService {
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
     private readonly uploadScenario: UploadMockScenario = 'success',
+    private readonly videoListScenario: VideoListMockScenario = 'success',
   ) {}
 
   private async findOwnedVideo(userId: string, videoId: string, signal?: AbortSignal) {
@@ -114,6 +117,13 @@ export class MockVideoService implements VideoService {
   async listVideos({ userId, uploadStatus, signal }: ListVideosOptions) {
     throwIfAborted(signal);
     const normalizedUserId = userId.trim();
+    if (normalizedUserId !== DEMO_USER_ID) return [];
+    await waitForDemoDelay(VIDEO_LIST_MOCK_DELAY_MS, signal);
+    if (this.videoListScenario === 'error' && !this.failedFirstListRequest) {
+      this.failedFirstListRequest = true;
+      throw createVideoListQueryError();
+    }
+    if (this.videoListScenario === 'empty') return [];
     const snapshot = await this.repository.getSnapshot({ signal });
     return sortVideos(
       snapshot.videos.filter(

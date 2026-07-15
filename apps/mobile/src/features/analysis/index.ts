@@ -9,6 +9,7 @@ export type {
   StartAnalysisOptions,
 } from './services/AnalysisService';
 export { MockAnalysisService } from './services/MockAnalysisService';
+export { analysisMutationKeys, analysisQueryKeys } from './queryKeys';
 
 export const analysisService = new MockAnalysisService(
   demoDataRepository,

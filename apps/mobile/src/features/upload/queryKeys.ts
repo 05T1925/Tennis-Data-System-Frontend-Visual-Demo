@@ -1,5 +1,8 @@
+import { analysisQueryKeys } from '@/features/analysis/queryKeys';
+import { videoQueryKeys } from '@/features/videos/queryKeys';
+
 export const uploadQueryKeys = {
-  videoList: (userId: string) => ['videos', 'list', userId] as const,
-  videoDetail: (userId: string, videoId: string) => ['videos', 'detail', userId, videoId] as const,
-  analysisTask: (userId: string, videoId: string) => ['analysis', 'task', userId, videoId] as const,
+  videoList: videoQueryKeys.list,
+  videoDetail: videoQueryKeys.detail,
+  analysisTask: analysisQueryKeys.task,
 };

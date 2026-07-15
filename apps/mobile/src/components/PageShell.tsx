@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,6 +11,8 @@ type PageShellProps = PropsWithChildren<{
   eyebrow?: string;
   footer?: ReactNode;
   edges?: Edge[];
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }>;
 
 const tabPageEdges: Edge[] = ['top', 'left', 'right'];
@@ -22,12 +24,24 @@ export function PageShell({
   eyebrow,
   footer,
   edges = tabPageEdges,
+  refreshing = false,
+  onRefresh,
 }: PageShellProps) {
   return (
     <SafeAreaView style={styles.safeArea} edges={edges}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              colors={[theme.colors.primary]}
+              onRefresh={onRefresh}
+              refreshing={refreshing}
+              tintColor={theme.colors.primary}
+            />
+          ) : undefined
+        }
         showsVerticalScrollIndicator={false}
       >
         {(eyebrow || title || description) && (

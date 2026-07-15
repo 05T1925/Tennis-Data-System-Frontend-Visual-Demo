@@ -1,16 +1,19 @@
 # 网球视频分析系统 v0.1
 
-用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。当前已完成阶段 1 工程脚手架，仅包含可运行的 Mobile、Web Dashboard、共享类型和占位路由，不包含业务实现。
+用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。当前已推进到
+阶段 8：Mobile 已具备 Mock 登录、首页、视频选择与模拟上传、视频列表、状态筛选和失败分析任务
+重试；完整详情、结果展示和 Web 业务仍未实现。
 
 ## 当前状态
 
-| 模块                           | 当前状态                                                                             |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| Mobile App                     | Expo 57、React Native 0.86、Expo Router 与 TypeScript 脚手架可运行；页面均为占位页。 |
-| Web Dashboard                  | React 19、Vite 8、React Router 与 TypeScript 脚手架可运行；页面均为占位页。          |
-| shared-types                   | 可直接消费 TypeScript 源码；当前只有基础工程验证类型。                               |
-| Backend / CV / Data Processing | 尚未创建。                                                                           |
-| 业务功能                       | 登录、上传、视频、分析任务、结果、统计和 Mock Service 均尚未实现。                   |
+| 模块                           | 当前状态                                                                |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| Mobile App                     | Mock 登录/Session、首页、统一 Demo 数据、模拟上传和视频列表已接入。     |
+| Web Dashboard                  | React、Vite、React Router 脚手架可运行；业务页面仍为占位。              |
+| shared-types                   | 提供 Video、AnalysisTask、AnalysisResult 和通用错误等稳定前端类型。     |
+| Mock 数据与 Service            | Video、Analysis、Statistics Service 共享唯一持久化 DemoDataRepository。 |
+| Backend / CV / Data Processing | 尚未创建；当前上传、任务推进和结果数据均为本地确定性 Mock。             |
+| 尚未实现                       | 完整视频详情、播放器、自动分析轮询、结果 UI、完整统计和 Web 业务。      |
 
 ## 环境要求
 
@@ -23,6 +26,7 @@
 ```powershell
 pnpm install
 pnpm mobile:start
+pnpm --filter @tennis/mobile test
 pnpm web:dev
 pnpm web:build
 pnpm lint
@@ -31,7 +35,8 @@ pnpm format:check
 pnpm format
 ```
 
-`pnpm mobile:start` 启动 Expo/Metro，`pnpm web:dev` 默认启动 Vite 开发服务器。阶段 1 未配置测试框架，因此当前没有测试命令。
+`pnpm mobile:start` 启动 Expo/Metro，`pnpm web:dev` 默认启动 Vite 开发服务器。Mobile 使用 Vitest
+运行纯 TypeScript 领域、Service 和 workflow 测试；当前没有 React Native UI 测试框架。
 
 ## 目录结构
 
@@ -70,5 +75,6 @@ pnpm format
 - [术语表](docs/GLOSSARY.md)
 - [项目状态](docs/PROJECT_STATUS.md)
 - [阶段 1 记录](docs/progress/stage-01-project-init.md)
+- [阶段 8 记录](docs/progress/stage-08-mobile-video-list.md)
 
 `other_docs/` 中的三个 Word 文件是未跟踪的原始材料，不属于工程交付物，不得修改、暂存或提交。该目录由用户在阶段 1 执行期间统一整理。
