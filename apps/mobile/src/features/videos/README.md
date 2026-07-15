@@ -1,8 +1,8 @@
 # Mobile Videos 模块
 
-Videos Feature 提供当前 Mobile Demo 的视频 Service、视频列表 Query、列表消费模型和展示组件。生产
-Mock 实例与 Analysis、Statistics Service 共享唯一 `DemoDataRepository`；页面不访问 Repository、
-AsyncStorage 或固定数据数组。
+Videos Feature 提供当前 Mobile Demo 的视频 Service、视频列表/详情 Query、消费模型和展示组件。
+生产 Mock 实例与 Analysis、Statistics Service 共享唯一 `DemoDataRepository`；页面不访问
+Repository、AsyncStorage 或固定数据数组。
 
 ## 数据流
 
@@ -20,6 +20,10 @@ Auth User
 列表只查询一次全部视频，筛选在客户端完成。每条 AnalysisTask Query 独立保存 pending、error 和
 data，一条任务失败不会使整个列表进入错误状态。当前没有分页、搜索或自动轮询。
 
+详情通过 `useVideoDetail` 查询 canonical detail key，并在视频上传完成后组合唯一 AnalysisTask
+observer 和 AnalysisResult Query。详情组件只展示预览占位、基础信息、上传/分析状态、阶段进度、
+失败重试和简要 Demo 摘要，不读取 URI、storagePath 或 playbackUrl。
+
 ## Query keys
 
 Videos Feature 拥有以下 canonical keys：
@@ -29,8 +33,8 @@ Videos Feature 拥有以下 canonical keys：
 ['videos', 'detail', userId, videoId]
 ```
 
-Analysis Feature 拥有 task 和 retry keys。Upload Feature 的兼容 factory 委托给这两处定义，因此
-阶段 7 的缓存失效仍命中同一 tuple。
+Analysis Feature 拥有 task、result 和 retry keys。Upload Feature 的兼容 factory 委托给 canonical
+定义，因此阶段 7 的缓存失效仍命中同一 tuple。
 
 ## 状态与筛选
 
@@ -40,6 +44,9 @@ Analysis Feature 拥有 task 和 retry keys。Upload Feature 的兼容 factory �
 
 只有 uploaded 且 task failed 的有效视频允许快速重试。重试调用 AnalysisService 原地更新任务，
 成功后直接写入对应 task cache；同一视频防重复，不同视频互不阻塞。阶段 8 不轮询重试后的状态。
+
+详情 retry 成功后写入 queued task、移除精确 result cache，并由同一个详情 Task Query 恢复 3 秒
+轮询。视频列表仍不轮询，也没有为详情新增第二份数据源。
 
 ## Mock 场景与替换边界
 

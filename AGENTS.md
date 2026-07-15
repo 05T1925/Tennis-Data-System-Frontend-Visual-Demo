@@ -2,9 +2,9 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。当前已推进到阶段 8：Mobile 已具备 Mock 认证、首页、
-唯一持久化 DemoDataRepository、Video/Analysis/Statistics Service、模拟上传和视频列表；Backend、
-Real API、CV 与正式数据处理仍未实现。
+本项目是网球视频分析系统 v0.1 的前端 Demo。当前已推进到阶段 9：Mobile 已具备 Mock 认证、首页、
+唯一持久化 DemoDataRepository、模拟上传、视频列表、视频详情、受控分析轮询和简要 Result 摘要；
+Backend、Real API、CV 与正式数据处理仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
 
@@ -12,7 +12,10 @@ v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据
 
 - `apps/mobile`：`@tennis/mobile`，Expo 57、React Native、Expo Router、TypeScript。
 - `apps/mobile/src/features/demo-data`：唯一 Demo 业务数据源和持久化 Repository。
-- `apps/mobile/src/features/videos`、`analysis`、`statistics`：共享 Repository 的 Mock Service。
+- `apps/mobile/src/features/videos`：视频列表、详情和共享 Repository 的 Mock Video Service。
+- `apps/mobile/src/features/analysis`：Task 轮询、retry、Result 摘要和共享 Repository 的 Mock
+  Analysis Service。
+- `apps/mobile/src/features/statistics`：共享 Repository 的 Mock Statistics Service。
 - `apps/mobile/src/features/upload`：视频选择、表单和模拟上传 workflow。
 - `apps/web`：`@tennis/web-dashboard`，React、Vite、React Router、TypeScript。
 - `packages/shared-types`：`@tennis/shared-types`，提供 v0.1 稳定核心领域类型；不包含 UI、Service、

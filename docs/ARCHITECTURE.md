@@ -10,6 +10,7 @@ apps/mobile (@tennis/mobile)
         ├─ TanStack Query Provider 与首页独立 Query
         ├─ 相册视频选择、上传表单与 Upload Query/Mutation workflow
         ├─ 视频列表 Query、AnalysisTask useQueries 与列表 View Model
+        ├─ 视频详情 Query、单 AnalysisTask observer 与 Result 摘要
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
         ├─ VideoService / MockVideoService ──────┐
@@ -32,8 +33,8 @@ apps/web                │
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
 Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；视频
-列表已经接入业务，视频详情、分析结果和完整统计页面仍未接入业务；Web 页面仍仅验证工程和占位
-路由。
+列表和视频详情已经接入业务，详情包含受控任务轮询和简要 Result 摘要；完整结果与完整统计页面
+仍未接入业务，Web 页面仍仅验证工程和占位路由。
 
 ## 2. 当前前端边界
 
@@ -119,7 +120,21 @@ task 前缀，不清空 QueryClient。
 
 失败分析任务通过现有 `retryAnalysis` Mutation 原地重试。Hook 按 videoId 隔离 AbortController、
 loading 和安全错误；成功后将返回的 queued task 直接写入对应 cache，并精确失效首页 overview。
-当前列表没有自动轮询、详情数据或 AnalysisResult 展示。
+视频列表继续不做自动轮询，也不承载详情数据或 AnalysisResult 展示。
+
+阶段 9 将详情骨架替换为 `useVideoDetail` 和 `VideoDetailContent`。详情 Query 继续使用
+`['videos', 'detail', userId, videoId]`；只有 Video 成功且 uploaded 时才启用唯一 Task Query。
+Task Query 通过函数式 `refetchInterval` 在 queued/processing 分别使用 3 秒/2 秒间隔，terminal、
+error、页面失焦及 AppState 非 active 时返回 false。
+
+详情轮询使用 Expo Router navigation focus subscription 和一个局部 AppState listener，不配置
+全局 focusManager。组合环境从 false 恢复为 true 时，对 active/null Task 立即 refetch 一次；初次
+挂载、terminal、error 和已有 fetch 不重复。卸载由 Query observer 和 subscription cleanup 收口。
+
+详情 retry 沿用 `retryAnalysis`、canonical task/retry keys 和单视频 Abort/锁。成功后写入 queued
+task cache、移除精确 result cache并失效首页 overview；失败保留 Video/Task并精确 refetch Task。
+Task succeeded 后 `['analysis', 'result', userId, videoId]` 自动启用，`staleTime: 0` 且不轮询。
+Video、Task、Result 和 retry 错误分别隔离；详情只展示 summary，完整结果仍属于阶段 10。
 
 ### Web Dashboard
 
