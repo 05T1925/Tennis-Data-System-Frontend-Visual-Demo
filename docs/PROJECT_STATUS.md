@@ -1,11 +1,13 @@
 # 项目状态
 
-最近更新时间：2026-07-15
+最近更新时间：2026-07-16
 
 ## 当前阶段
 
-阶段 9-C：Mobile 视频详情独立审查与简化修正完成，等待用户执行 Git 提交。当前分支为
-`feature/stage-09-mobile-video-detail`，HEAD 保持阶段 8提交 `b782bb7`，阶段 9改动未暂存、未提交。
+阶段 10-C：Mobile完整分析结果独立审查与提交前收口完成，满足Demo代码提交条件，等待用户执行
+Git提交。当前分支为`feature/stage-10-mobile-analysis-result`，HEAD仍为已提交的阶段9基线
+`d573475`，阶段10改动未暂存、未提交。人工平台验收仍未执行；Expo dependency check保留已确认的
+既有基线例外。
 
 ## 状态摘要
 
@@ -49,12 +51,23 @@ terminal、query error、页面失焦、inactive 和 background 均停止。焦�
 
 详情失败任务继续调用 `retryAnalysis` 原地重试，成功写入 queued task cache并移除精确 Result
 cache。Task succeeded 后 canonical Result Query 自动启用且不轮询，只展示真实 summary 的最多
-六项 Demo 指标；播放器和完整结果仍未实现。
+六项 Demo指标。详情页本身继续只展示简要summary；播放器仍未实现；完整结果由阶段10独立Result
+页面提供。
 
 阶段 9-C 将详情 retry状态绑定到当前 identity访问周期：切换userId/videoId会在新渲染提交前清除
 旧 pending/error并abort旧Controller；finally只有仍拥有当前Controller的请求才能释放lock，避免
 A→B→A时旧请求清除新retry锁。当前没有Hook/UI测试库，该生命周期收口由代码owner约束、静态
 审查和完整回归保证，不代表真机焦点或后台恢复已人工验收。
+
+阶段 10 新增受保护的 `/videos/[videoId]/result`独立结果页。结果页通过canonical Video、Task、
+Result keys查询同一Service。Task不设置自动轮询；每次结果页挂载时主动核验，错误可手动refetch，
+并遵循QueryClient全局重连策略；Result同样不设置自动轮询。只有当前Task succeeded且当前Result
+Query success/non-null时才向页面暴露Result，disabled Query中可能存在的旧缓存不会进入指标或
+图表。详情摘要仅在同样资格满足时显示完整结果入口。
+
+完整结果固定展示 9 项指标，并用普通 React Native View 实现球速折线、回合柱形、Demo `[0,1]`
+相对落点和非百分制能力条。Presentation 纯函数负责格式化、稳定排序、过滤和文字摘要；各分区
+独立处理空数据。没有修改 shared-types、Seed、Schema、Service 或阶段 9轮询架构。
 
 ## 模块状态
 
@@ -69,7 +82,8 @@ A→B→A时旧请求清除新retry锁。当前没有Hook/UI测试库，该生�
 | Mobile 上传页           | ✅ Mock 闭环     | 相册选择、表单、进度、fail-once、retry、离开提示和导航。    |
 | Mobile 视频列表         | ✅ 阶段 8-C      | 刷新竞态、retry 错误生命周期和文档事实已收口。              |
 | Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。            |
-| 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整结果和完整统计尚未实现。                                |
+| Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                      |
+| 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                          |
 | Web Dashboard           | ⏳ 占位          | 源码未修改。                                                |
 | Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                              |
 
@@ -90,11 +104,13 @@ Vitest 与 Mobile `test` script 继续用于纯逻辑测试。测试使用 Node
 环境、Memory Storage、可变 Clock 和确定性 ID，不依赖 React Native UI 测试库或原生
 AsyncStorage。
 
-当前 Mobile 共 14 个测试文件、190 个用例，新增覆盖详情格式化、轮询停止/恢复决策、阶段进度、
-retry/Result 启用资格和摘要安全降级。现有 Repository、Service、上传和列表回归继续通过。
-Mobile/整仓 lint 与 typecheck、Expo dependency check、格式检查、Web build、Android/iOS 静态
-export、Metro 和 diff check 均通过；Android 1529 modules/29 files、iOS 1396 modules/25 files，
-临时目录、Metro进程和日志均已清理。未新增依赖，package和锁文件未修改。
+阶段10-C复验中Mobile共15个测试文件、287个用例，全部通过且无skip/only/todo。阶段10所属代码、
+测试、lint、typecheck、format、build、export、Metro和diff检查通过；Android 1538 modules/29
+files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录和本轮日志均已清理。
+
+`expo install --check`仍报告8个既有Expo包需要对齐新的推荐补丁版本；所有当前版本与HEAD相同，
+阶段10未修改package、workspace或锁文件。该项作为已知基线例外，不阻塞本次Demo提交；后续通过
+独立maintenance任务处理。本阶段未新增、删除或升级依赖。
 
 ## 当前限制与风险
 
@@ -109,12 +125,15 @@ export、Metro 和 diff check 均通过；Android 1529 modules/29 files、iOS 13
 - 视频列表 Seed 的活动任务会在约 7 秒内惰性完成，queued/processing 的人工观察依赖重新 Seed 或
   失败任务 retry。
 - 未执行 Expo Web、Expo Go、Android/iOS 真机、Development Build 或视觉交互验收。
-- 当前没有相机、真实上传、播放器、算法或阶段 10正式分析结果 UI。
+- CourtPoint 正式坐标契约和 PlayerProfile 范围仍未确认；当前只作 Demo 相对示意。
+- 普通 View 折线和响应式布局尚未在真机人工验收。
+- 当前没有相机、真实上传、播放器或真实算法。
 
 ## 下一阶段条件
 
-- 阶段 9-C 已完成retry identity、文档事实、审查材料和自动验证收口，满足Demo代码提交条件。
+- 阶段9已提交为`d573475`；阶段10-C满足Demo代码提交条件，允许用户提交阶段10改动。
 - Expo Web、Expo Go、Android/iOS真机和Development Build人工验收仍未执行，不能据此声明真机
   体验通过。
-- 阶段 10再实现完整 AnalysisResult、Shot/Rally/Point 和图表，不扩展阶段 9摘要。
+- Expo补丁对齐作为独立维护任务，建议在阶段11前处理，但不阻塞本次阶段10提交。
+- 阶段11尚未开始。
 - Real API 接入时新增 DTO/Adapter 和 Real Service，不让页面或 Repository 承担传输转换。

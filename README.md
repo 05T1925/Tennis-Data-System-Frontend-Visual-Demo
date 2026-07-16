@@ -1,19 +1,20 @@
 # 网球视频分析系统 v0.1
 
 用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。当前已推进到
-阶段 9：Mobile 已具备 Mock 登录、首页、视频选择与模拟上传、视频列表、视频详情、受控分析轮询、
-失败任务重试和简要结果摘要；完整结果展示和 Web 业务仍未实现。
+阶段 10：Mobile 已具备 Mock 登录、首页、视频选择与模拟上传、视频列表、视频详情、受控分析轮询、
+失败任务重试、结果摘要和独立完整结果页；Web 业务仍未实现。
 
 ## 当前状态
 
 | 模块                           | 当前状态                                                                |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| Mobile App                     | Mock 身份、首页、上传、列表、详情、分析轮询和结果摘要已接入。           |
+| Mobile App                     | Mock 身份、上传、列表、详情、轮询、摘要和完整结果页已接入。             |
 | Web Dashboard                  | React、Vite、React Router 脚手架可运行；业务页面仍为占位。              |
 | shared-types                   | 提供 Video、AnalysisTask、AnalysisResult 和通用错误等稳定前端类型。     |
 | Mock 数据与 Service            | Video、Analysis、Statistics Service 共享唯一持久化 DemoDataRepository。 |
 | Backend / CV / Data Processing | 尚未创建；当前上传、任务推进和结果数据均为本地确定性 Mock。             |
-| 尚未实现                       | 播放器、阶段 10 完整结果 UI、完整统计和 Web 业务。                      |
+| 阶段 10 结果展示               | 9 项指标、球速/回合/相对落点/能力画像静态可视化已接入。                 |
+| 尚未实现                       | 播放器、完整统计、Real API、Backend、CV 和 Web 业务。                   |
 
 ## 环境要求
 
@@ -77,5 +78,6 @@ pnpm format
 - [阶段 1 记录](docs/progress/stage-01-project-init.md)
 - [阶段 8 记录](docs/progress/stage-08-mobile-video-list.md)
 - [阶段 9 记录](docs/progress/stage-09-mobile-video-detail.md)
+- [阶段 10 记录](docs/progress/stage-10-mobile-analysis-result.md)
 
 `other_docs/` 中的三个 Word 文件是未跟踪的原始材料，不属于工程交付物，不得修改、暂存或提交。该目录由用户在阶段 1 执行期间统一整理。

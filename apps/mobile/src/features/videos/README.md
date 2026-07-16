@@ -22,7 +22,9 @@ data，一条任务失败不会使整个列表进入错误状态。当前没有�
 
 详情通过 `useVideoDetail` 查询 canonical detail key，并在视频上传完成后组合唯一 AnalysisTask
 observer 和 AnalysisResult Query。详情组件只展示预览占位、基础信息、上传/分析状态、阶段进度、
-失败重试和简要 Demo 摘要，不读取 URI、storagePath 或 playbackUrl。
+失败重试和简要 Demo 摘要，不读取 URI、storagePath 或 playbackUrl。只有 Task Query success且
+status为succeeded、Result Query success且data非null时，摘要区才显示“查看完整分析结果”入口。
+入口进入独立 Result路由；详情的3秒/2秒轮询、focus/AppState和retry继续保持阶段9实现。
 
 ## Query keys
 

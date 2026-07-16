@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton, AppCard, EmptyState, PageShell, SectionTitle } from '@/components';
 import {
+  canOpenFullAnalysisResult,
   createAnalysisSummaryItems,
   getAnalysisStageLabel,
   getAnalysisStatusLabel,
@@ -21,6 +22,7 @@ import {
 type VideoDetailContentProps = {
   detail: VideoDetailState;
   onBack: () => void;
+  onViewFullResult: () => void;
 };
 
 function PageMessage({
@@ -202,7 +204,13 @@ function AnalysisSection({ detail }: { detail: VideoDetailState }) {
   );
 }
 
-function ResultSection({ detail }: { detail: VideoDetailState }) {
+function ResultSection({
+  detail,
+  onViewFullResult,
+}: {
+  detail: VideoDetailState;
+  onViewFullResult: () => void;
+}) {
   if (!detail.resultEnabled) return null;
   const { resultQuery } = detail;
 
@@ -239,6 +247,16 @@ function ResultSection({ detail }: { detail: VideoDetailState }) {
   }
 
   const items = createAnalysisSummaryItems(resultQuery.data);
+  const canViewFullResult = canOpenFullAnalysisResult({
+    identityValid: detail.identityValid,
+    videoQueryFetching: detail.videoQuery.isFetching,
+    taskQuerySuccess: detail.taskQuery.isSuccess,
+    taskQueryFetching: detail.taskQuery.isFetching,
+    taskStatus: detail.taskQuery.data?.status,
+    resultQuerySuccess: resultQuery.isSuccess,
+    resultQueryFetching: resultQuery.isFetching,
+    result: resultQuery.data,
+  });
   return (
     <AppCard>
       <SectionTitle title="分析结果摘要" description="Demo 分析数据" />
@@ -250,11 +268,18 @@ function ResultSection({ detail }: { detail: VideoDetailState }) {
           </View>
         ))}
       </View>
+      {canViewFullResult ? (
+        <AppButton
+          accessibilityLabel="查看当前视频的完整分析结果"
+          label="查看完整分析结果"
+          onPress={onViewFullResult}
+        />
+      ) : null}
     </AppCard>
   );
 }
 
-export function VideoDetailContent({ detail, onBack }: VideoDetailContentProps) {
+export function VideoDetailContent({ detail, onBack, onViewFullResult }: VideoDetailContentProps) {
   if (!detail.identityValid) {
     return (
       <PageMessage
@@ -322,7 +347,7 @@ export function VideoDetailContent({ detail, onBack }: VideoDetailContentProps) 
       {video.uploadStatus === 'uploaded' ? (
         <>
           <AnalysisSection detail={detail} />
-          <ResultSection detail={detail} />
+          <ResultSection detail={detail} onViewFullResult={onViewFullResult} />
         </>
       ) : (
         <AppCard>

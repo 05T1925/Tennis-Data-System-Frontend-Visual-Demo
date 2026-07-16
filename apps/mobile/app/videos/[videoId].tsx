@@ -19,5 +19,13 @@ export default function VideoDetailScreen() {
     router.replace('/(tabs)/videos');
   };
 
-  return <VideoDetailContent detail={detail} onBack={goBack} />;
+  const viewFullResult = () => {
+    if (!normalizedVideoId) return;
+    router.push({
+      pathname: '/videos/[videoId]/result',
+      params: { videoId: normalizedVideoId },
+    });
+  };
+
+  return <VideoDetailContent detail={detail} onBack={goBack} onViewFullResult={viewFullResult} />;
 }

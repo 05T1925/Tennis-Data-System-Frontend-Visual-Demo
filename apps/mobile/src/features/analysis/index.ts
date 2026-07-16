@@ -20,3 +20,6 @@ export {
 } from './analysisPresentation';
 export type { AnalysisSummaryItem } from './analysisPresentation';
 export { useAnalysisPolling } from './hooks/useAnalysisPolling';
+export { AnalysisResultContent } from './components/AnalysisResultContent';
+export { canOpenFullAnalysisResult } from './analysisResultPresentation';
+export { useAnalysisResult } from './hooks/useAnalysisResult';

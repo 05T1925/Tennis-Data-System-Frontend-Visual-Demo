@@ -34,6 +34,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="upload/index" />
         <Stack.Screen name="videos/[videoId]" />
+        <Stack.Screen name="videos/[videoId]/result" />
       </Stack.Protected>
     </Stack>
   );

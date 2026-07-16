@@ -27,5 +27,14 @@ inactive 和 background 均停止。环境恢复时只对 active/null Task 立�
 或全局 focusManager。
 
 Task succeeded 后 Result Query 自动启用，使用 `staleTime: 0` 且不轮询。详情只展示
-`AnalysisResult.summary` 的少量 Demo 指标；Shot、Rally、Point、图表和画像仍属于阶段 10。
+`AnalysisResult.summary` 的少量 Demo 指标。
+
+阶段 10 新增 `useAnalysisResult` 和受保护的独立 Result 页面。Hook 复用 canonical Video、Task、
+Result keys。结果页不设置 refetchInterval、timer、focus或AppState监听，因此Task和Result均不
+轮询；每次结果页挂载时会主动核验Video和Task，错误状态允许用户手动refetch，Query仍遵循根
+QueryClient的全局重连刷新策略。只有当前Task succeeded且Result success/non-null时才向页面暴露
+数据，旧cache不能越过资格层。页面固定展示9项指标，并使用普通 View绘制球速折线、回合柱形、
+`heatmapPoints`的Demo `[0,1]`相对落点和四项非百分制能力条。纯Presentation负责格式化、排序、
+过滤、相对坐标和文字摘要，各图表独立降级。
+
 未来 Real AnalysisService 保持当前接口和 Query key，由 DTO/Adapter 替换 Mock Repository 边界。

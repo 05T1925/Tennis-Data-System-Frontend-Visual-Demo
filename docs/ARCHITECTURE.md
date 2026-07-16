@@ -11,6 +11,7 @@ apps/mobile (@tennis/mobile)
         ├─ 相册视频选择、上传表单与 Upload Query/Mutation workflow
         ├─ 视频列表 Query、AnalysisTask useQueries 与列表 View Model
         ├─ 视频详情 Query、单 AnalysisTask observer 与 Result 摘要
+        ├─ 独立 Result 路由、非轮询 Task 状态核验与普通 View 静态图表
         ├─ React Context Mock Session 状态与流程编排
         ├─ AuthService / MockAuthService
         ├─ VideoService / MockVideoService ──────┐
@@ -33,8 +34,8 @@ apps/web                │
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
 Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；视频
-列表和视频详情已经接入业务，详情包含受控任务轮询和简要 Result 摘要；完整结果与完整统计页面
-仍未接入业务，Web 页面仍仅验证工程和占位路由。
+列表和视频详情已经接入业务，详情包含受控任务轮询和简要 Result 摘要；独立完整结果页已展示
+9项指标和四类静态可视化，完整统计仍未接入，Web 页面仍仅验证工程和占位路由。
 
 ## 2. 当前前端边界
 
@@ -43,7 +44,7 @@ Service 底座。上传页现已接入相册选择、元数据校验、业务表
 `apps/mobile` 面向普通网球用户。当前采用 Expo 57、React Native 0.86、Expo Router 和
 TypeScript，路由位于 `app/`，公共代码位于 `src/`。根布局通过 `SafeAreaProvider` 和
 `AuthSessionProvider` 提供应用级上下文，并使用 `Stack.Protected` 将未登录可访问的登录路由
-与登录后可访问的 Tabs、上传页和视频详情页分开。四个底部 Tab 使用稳定的 Expo Router
+与登录后可访问的 Tabs、上传页、视频详情页和完整结果页分开。四个底部 Tab 使用稳定的 Expo Router
 `Tabs`，非 Tab 页面仍由根 Stack 管理。
 
 `AuthSessionProvider` 保留阶段 3 的单一 Auth Context，只负责 `restoring`、`authenticated`、
@@ -134,7 +135,20 @@ error、页面失焦及 AppState 非 active 时返回 false。
 详情 retry 沿用 `retryAnalysis`、canonical task/retry keys 和单视频 Abort/锁。成功后写入 queued
 task cache、移除精确 result cache并失效首页 overview；失败保留 Video/Task并精确 refetch Task。
 Task succeeded 后 `['analysis', 'result', userId, videoId]` 自动启用，`staleTime: 0` 且不轮询。
-Video、Task、Result 和 retry 错误分别隔离；详情只展示 summary，完整结果仍属于阶段 10。
+Video、Task、Result 和 retry错误分别隔离；详情继续只展示summary，完整结果由阶段10的独立
+Result页面承担，播放器仍未实现。
+
+阶段 10 在 Protected Stack 中增加 `/videos/[videoId]/result`。`useAnalysisResult` 复用 canonical
+Video detail、Analysis Task 和 Result keys。结果页不设置Task轮询；每次页面挂载时主动核验Video
+和Task，错误状态允许手动refetch，并遵循QueryClient的全局重连策略。Task succeeded后才启用
+Result Query；Task和Result都不设置refetchInterval、AppState、focus或timer。展示资格同时要求当前
+Task Query success/succeeded和Result Query success/non-null，因此disabled Query暴露的旧Result
+cache不能进入完整页面。
+
+`analysisResultPresentation.ts` 将9项指标、球速点、Rally柱形、`[0,1]` Demo相对点位和四项能力
+画像转换成只读展示数据。图表全部使用普通 React Native View/ScrollView，无SVG、Canvas、动画或
+图表库；每个分区独立空状态。CourtPoint只作相对示意，PlayerProfile能力条只表达本次四项相对
+高低，不声明百分制、专业评级或算法精度。阶段 11 尚未开始。
 
 ### Web Dashboard
 
