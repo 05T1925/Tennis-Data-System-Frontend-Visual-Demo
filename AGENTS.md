@@ -2,9 +2,10 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。当前已推进到阶段 9：Mobile 已具备 Mock 认证、首页、
-唯一持久化 DemoDataRepository、模拟上传、视频列表、视频详情、受控分析轮询和简要 Result 摘要；
-Backend、Real API、CV 与正式数据处理仍未实现。
+本项目是网球视频分析系统 v0.1 的前端 Demo。当前已推进到阶段 12-C：Mobile 保持 Mock 认证、上传、
+视频列表、视频详情、受控分析轮询和 Result 摘要；Web 已具备受保护后台、Web 私有视频 Mock 数据层、
+视频管理、筛选分页和基础详情。阶段 12-C 代码修正、自动验证和人工交互验收完成，等待 ChatGPT
+最终提交资格判断；Backend、Real API、CV 与正式数据处理仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
 
@@ -18,6 +19,8 @@ v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据
 - `apps/mobile/src/features/statistics`：共享 Repository 的 Mock Statistics Service。
 - `apps/mobile/src/features/upload`：视频选择、表单和模拟上传 workflow。
 - `apps/web`：`@tennis/web-dashboard`，React、Vite、React Router、TypeScript。
+- `apps/web/src/features/demo-data`：Web 独立 Snapshot、Zod Schema、localStorage Adapter 和 Repository。
+- `apps/web/src/features/videos`：Web VideoService、URL 参数、Query Hooks、Presentation、列表和详情。
 - `packages/shared-types`：`@tennis/shared-types`，提供 v0.1 稳定核心领域类型；不包含 UI、Service、
   DTO Adapter、运行时 Schema 或业务算法。
 - 包管理器：pnpm `11.7.0`；唯一锁文件为根 `pnpm-lock.yaml`。
@@ -46,6 +49,7 @@ Mobile 使用 Vitest 运行 `src/features/**/__tests__/*.test.ts`。当前没有
 - 后续 Service 负责接口调用，Mock Service 与 Real Service 必须实现相同接口。
 - Video、Analysis、Statistics Mock Service 必须继续共享唯一 DemoDataRepository；不得创建第二份
   Repository、视频数组、分析任务副本或状态机。
+- Web Mock 数据不访问 Mobile Repository、AsyncStorage 或 Mobile Query keys；两端数据源保持隔离。
 - 页面和 Hook 通过公开 Service 与 canonical Query keys 访问业务数据，不直接访问 AsyncStorage。
 - Adapter 负责 API DTO 与 Domain Model 转换，尤其处理 snake_case 到 camelCase。
 - 复杂业务逻辑放在领域逻辑、hooks 或 utilities；可复用组件不得绑定单一页面。

@@ -226,6 +226,39 @@ body {
   overflow-wrap: anywhere;
 }
 
+.video-filters .ant-card-body {
+  padding: 16px;
+}
+
+.video-filter-search {
+  width: min(100%, 340px);
+}
+
+.video-filter-select {
+  width: 168px;
+}
+
+.video-filter-date {
+  width: 150px;
+}
+
+.video-page-loading {
+  display: grid;
+  min-height: 280px;
+  place-items: center;
+}
+
+.video-table-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ant-table-wrapper {
+  min-width: 0;
+}
+
 @media (max-width: 1100px) {
   .dashboard-header {
     gap: 10px;

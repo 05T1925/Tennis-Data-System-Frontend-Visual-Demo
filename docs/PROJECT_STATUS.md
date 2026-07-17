@@ -4,10 +4,9 @@
 
 ## 当前阶段
 
-阶段 11-C：Web 后台基础框架代码与文档收口完成，等待关键人工交互验收和独立提交资格判断。
-当前分支为 `feature/stage-11-web-dashboard`，HEAD 保持已提交的阶段 10 基线 `66d890c`；阶段 11
-改动未暂存、未提交。阶段 11-C 未执行人工浏览器验收；Expo dependency check 保留阶段 10 已
-确认的 8 个既有补丁版本例外。
+阶段 12-C：Web 视频管理与基础详情代码修正、自动验证和人工交互验收完成，等待 ChatGPT 最终
+提交资格判断。当前分支为 `feature/stage-12-web-video-management`，HEAD 为阶段 11 基线
+`73df913`；阶段 12 改动未暂存、未提交。Expo dependency check 保留已知的 8 个既有补丁版本例外。
 
 ## 状态摘要
 
@@ -18,8 +17,9 @@ AsyncStorage `tennis.demo.data.v1` 持久化。Auth key 和认证代码未修改
 Web 新增独立 Mock 管理员身份、版本化 sessionStorage、恢复/登录/退出编排、Protected 与
 Public-only Guard、根重定向和安全 404。Ant Design 后台 Layout 提供可折叠 Sidebar、Header、
 Mock 标识、用户与退出入口；集中导航元数据统一菜单高亮、页面标题和面包屑。TanStack Query
-Provider 已建立但没有虚假业务 Query。七个业务入口仍只提供基础结构，不包含视频表格、Task
-列表、CV JSON、统计图表或失败重试。
+Provider 已建立。阶段 12-B 新增 Web 私有 Snapshot、Zod Schema、localStorage、Repository、
+VideoService、URL 参数、Query Hooks、视频表格、筛选分页、基础详情、Clipboard 和单条级联删除。
+Task Result、CV、统计图表和分析失败重试仍未接入。
 
 VideoService 已向后兼容扩展列表、详情、创建元数据、模拟上传和级联删除。AnalysisService 支持
 开始、查询 Task/Result、确定性阶段推进、ball_tracking 固定失败及原地 retry。StatisticsService
@@ -90,7 +90,7 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 | Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。            |
 | Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                      |
 | 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                          |
-| Web Dashboard           | ✅ 阶段 11-C     | 基础框架代码与文档收口；人工验收待完成，业务数据未接入。    |
+| Web Dashboard           | ✅ 阶段 12-C     | 代码修正、自动验证和人工交互验收已完成。                    |
 | Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                              |
 
 ## 数据、并发与安全边界
@@ -104,6 +104,11 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 - Snapshot 不保存二进制、Token、密码、Timer、Promise、AbortSignal 或 UI/Query 状态。
 
 ## 测试与依赖
+
+阶段 12-B 为 Web 新增 `zod@^4.4.3`、`vitest@^4.1.10` 和 test script；阶段 12-C 增强边界测试。
+Web 7 个测试文件、97 个用例通过，Mobile 15 个测试文件、287 个用例通过；Web 和整仓
+lint/typecheck、format check、Web build 及 `git diff --check` 通过。Web build 保留约
+1,293 kB 主 JS chunk 的性能 warning。
 
 阶段 11-B 为 Web 新增 `antd`、`@ant-design/icons` 和 `@tanstack/react-query` 三个直接依赖，
 只修改 Web package 与根锁文件。阶段 7 新增 Expo SDK 兼容的 expo-image-picker `57.0.2` 和
@@ -143,7 +148,8 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
 - 当前没有相机、真实上传、播放器或真实算法。
 - Web Mock 登录不是正式权限系统，Route Guard 不是服务端授权；会话只在当前标签页有效。
 - Web 与 Mobile 不共享运行时数据，Web 不访问 Mobile DemoDataRepository。
-- Web 尚无 UI 自动测试；除根重定向和登录页外的人工交互及 1024～1920px 布局未验收。
+- Web 尚无 UI 自动测试；阶段 12 的人工浏览器验收已覆盖核心列表、筛选、URL、详情、删除、键盘、
+  1024～1920px 布局和回归项目。
 
 ## 下一阶段条件
 
@@ -152,6 +158,6 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
   体验通过。
 - Expo 补丁对齐继续作为独立 maintenance 任务，不属于阶段 11 代码范围，也不阻塞阶段 11 基础
   框架审查。
-- 阶段 11-C 代码与文档收口完成，等待人工认证、路由和导航验收后再判断提交资格；阶段 12 尚未
-  开始。
+- 阶段 12-C 代码修正、自动验证和人工交互验收完成，等待 ChatGPT 最终提交资格判断。
+- 阶段 13 的 Task retry、Result、CV 和日志尚未开始。
 - Real API 接入时新增 DTO/Adapter 和 Real Service，不让页面或 Repository 承担传输转换。

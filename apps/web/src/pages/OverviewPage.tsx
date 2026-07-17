@@ -1,6 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
 
@@ -12,6 +12,8 @@ const modules = [
 ];
 
 export function OverviewPage() {
+  const navigate = useNavigate();
+
   return (
     <Space orientation="vertical" size="large" className="page-stack">
       <PageIntro
@@ -31,11 +33,13 @@ export function OverviewPage() {
           <Col xs={24} md={12} xl={6} key={module.path}>
             <Card className="module-card" title={module.title}>
               <Typography.Paragraph type="secondary">{module.description}</Typography.Paragraph>
-              <Link to={module.path}>
-                <Button type="link" icon={<ArrowRightOutlined />}>
-                  打开模块
-                </Button>
-              </Link>
+              <Button
+                type="link"
+                icon={<ArrowRightOutlined />}
+                onClick={() => navigate(module.path)}
+              >
+                打开模块
+              </Button>
             </Card>
           </Col>
         ))}
