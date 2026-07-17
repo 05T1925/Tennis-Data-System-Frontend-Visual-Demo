@@ -28,14 +28,19 @@ apps/mobile (@tennis/mobile)
                         ├─ packages/shared-types
 apps/web                │
 (@tennis/web-dashboard) ┘
-        ├─ React Router 占位路由
-        └─ Web 主题与环境配置
+        ├─ Ant Design ConfigProvider
+        ├─ 单例 TanStack QueryClient Provider
+        ├─ Web 独立 Mock Auth Context + sessionStorage
+        ├─ React Router Guard 与集中导航元数据
+        ├─ Dashboard Sidebar / Header / Content
+        └─ Web 主题、基础页面与环境配置
 ```
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
 Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；视频
 列表和视频详情已经接入业务，详情包含受控任务轮询和简要 Result 摘要；独立完整结果页已展示
-9项指标和四类静态可视化，完整统计仍未接入，Web 页面仍仅验证工程和占位路由。
+9项指标和四类静态可视化，完整统计仍未接入。Web 已建立 Mock 管理员身份、受保护后台框架和基础
+业务入口，但视频、任务、CV 和统计业务数据仍未接入。
 
 ## 2. 当前前端边界
 
@@ -148,11 +153,24 @@ cache不能进入完整页面。
 `analysisResultPresentation.ts` 将9项指标、球速点、Rally柱形、`[0,1]` Demo相对点位和四项能力
 画像转换成只读展示数据。图表全部使用普通 React Native View/ScrollView，无SVG、Canvas、动画或
 图表库；每个分区独立空状态。CourtPoint只作相对示意，PlayerProfile能力条只表达本次四项相对
-高低，不声明百分制、专业评级或算法精度。阶段 11 尚未开始。
+高低，不声明百分制、专业评级或算法精度。阶段 11 已建立 Web 后台基础框架；阶段 12 业务数据接入
+尚未开始。
 
 ### Web Dashboard
 
-`apps/web` 面向内部团队。当前采用 React 19、Vite 8、React Router 和 TypeScript。`DashboardLayout` 只提供基础导航，各页面仅说明尚未实现的能力；没有权限保护、数据表格、图表或后台模板。
+`apps/web` 面向内部团队。当前采用 React 19、Vite 8、React Router、Ant Design、TanStack Query
+和 TypeScript。应用层级为 `ConfigProvider → WebQueryProvider → WebAuthProvider → RouterProvider`；
+QueryClient 在 Provider 生命周期中只创建一次，当前不承载虚假业务 Query。
+
+Web Auth 使用合法的共享 `User` admin 角色和公开 Demo 凭据，sessionStorage 只保存版本与 Demo
+userId。恢复、登录、退出由独立 Context 编排，Storage 损坏或不可用时只向 UI 暴露安全错误。
+Protected/Public-only Guard 分别处理后台和登录路由，根路径确定性重定向。该客户端 Guard 不是
+服务端授权，也不提供正式权限或 RBAC。
+
+`DashboardLayout` 通过集中导航元数据生成 Sidebar、页面标题、选中项和面包屑；动态视频详情
+高亮视频管理。当前总览、视频、详情、分析任务、CV 数据、统计和系统页面均为基础结构，不查询
+或伪造业务数据。Web 不导入 Mobile 代码、不读取 AsyncStorage 或 DemoDataRepository；后续阶段
+应新增 Web Service 接口及 Mock/Real 实现，并由 TanStack Query Hook 消费。
 
 ### shared-types
 
@@ -184,8 +202,8 @@ CV Output / Analysis Result / Statistics
 - Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
 - Auth 范围已接入 Mock Service、React Hook Form、Zod 和独立 AsyncStorage Session；Mobile 已
   接入 TanStack Query、统一 Demo Repository、Video/Analysis/Statistics Mock Service 和 Vitest
-  纯 TypeScript 状态测试。Real Service、业务 DTO Adapter、Zustand、Ant Design 和 Recharts 均
-  尚未接入。
+  纯 TypeScript 状态测试。Web 已接入 Ant Design 与 TanStack Query 基础 Provider，但 Real
+  Service、Web 业务 DTO Adapter、Zustand 和 Recharts 均尚未接入。
 
 ## 4. 分层原则
 

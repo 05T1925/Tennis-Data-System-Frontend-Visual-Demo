@@ -1,15 +1,20 @@
+import { Flex, Typography } from 'antd';
+import type { ReactNode } from 'react';
+
 type PageIntroProps = {
-  eyebrow?: string;
   title: string;
   description: string;
+  extra?: ReactNode;
 };
 
-export function PageIntro({ eyebrow = 'Stage 1', title, description }: PageIntroProps) {
+export function PageIntro({ title, description, extra }: PageIntroProps) {
   return (
-    <section className="page-intro">
-      <span className="eyebrow">{eyebrow}</span>
-      <h1>{title}</h1>
-      <p>{description}</p>
-    </section>
+    <Flex className="page-intro" justify="space-between" align="flex-start" gap={16} wrap>
+      <div>
+        <Typography.Title level={2}>{title}</Typography.Title>
+        <Typography.Paragraph type="secondary">{description}</Typography.Paragraph>
+      </div>
+      {extra}
+    </Flex>
   );
 }

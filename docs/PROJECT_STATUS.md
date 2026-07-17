@@ -1,19 +1,25 @@
 # 项目状态
 
-最近更新时间：2026-07-16
+最近更新时间：2026-07-17
 
 ## 当前阶段
 
-阶段 10-C：Mobile完整分析结果独立审查与提交前收口完成，满足Demo代码提交条件，等待用户执行
-Git提交。当前分支为`feature/stage-10-mobile-analysis-result`，HEAD仍为已提交的阶段9基线
-`d573475`，阶段10改动未暂存、未提交。人工平台验收仍未执行；Expo dependency check保留已确认的
-既有基线例外。
+阶段 11-C：Web 后台基础框架代码与文档收口完成，等待关键人工交互验收和独立提交资格判断。
+当前分支为 `feature/stage-11-web-dashboard`，HEAD 保持已提交的阶段 10 基线 `66d890c`；阶段 11
+改动未暂存、未提交。阶段 11-C 未执行人工浏览器验收；Expo dependency check 保留阶段 10 已
+确认的 8 个既有补丁版本例外。
 
 ## 状态摘要
 
 Mobile 保持阶段 4 Mock 登录/Session 和阶段 5 首页能力，新增唯一 DemoDataRepository。Video、
 Analysis、Statistics 三个 Mock Service 共享 version 1 Snapshot、Zod Runtime Schema、内存状态和
 AsyncStorage `tennis.demo.data.v1` 持久化。Auth key 和认证代码未修改。
+
+Web 新增独立 Mock 管理员身份、版本化 sessionStorage、恢复/登录/退出编排、Protected 与
+Public-only Guard、根重定向和安全 404。Ant Design 后台 Layout 提供可折叠 Sidebar、Header、
+Mock 标识、用户与退出入口；集中导航元数据统一菜单高亮、页面标题和面包屑。TanStack Query
+Provider 已建立但没有虚假业务 Query。七个业务入口仍只提供基础结构，不包含视频表格、Task
+列表、CV JSON、统计图表或失败重试。
 
 VideoService 已向后兼容扩展列表、详情、创建元数据、模拟上传和级联删除。AnalysisService 支持
 开始、查询 Task/Result、确定性阶段推进、ball_tracking 固定失败及原地 retry。StatisticsService
@@ -84,7 +90,7 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 | Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。            |
 | Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                      |
 | 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                          |
-| Web Dashboard           | ⏳ 占位          | 源码未修改。                                                |
+| Web Dashboard           | ✅ 阶段 11-C     | 基础框架代码与文档收口；人工验收待完成，业务数据未接入。    |
 | Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                              |
 
 ## 数据、并发与安全边界
@@ -99,14 +105,21 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 
 ## 测试与依赖
 
-阶段 7 新增 Expo SDK 兼容的 expo-image-picker `57.0.2` 和 expo-file-system `57.0.0`。阶段 6的
+阶段 11-B 为 Web 新增 `antd`、`@ant-design/icons` 和 `@tanstack/react-query` 三个直接依赖，
+只修改 Web package 与根锁文件。阶段 7 新增 Expo SDK 兼容的 expo-image-picker `57.0.2` 和
+expo-file-system `57.0.0`。阶段 6的
 Vitest 与 Mobile `test` script 继续用于纯逻辑测试。测试使用 Node
 环境、Memory Storage、可变 Clock 和确定性 ID，不依赖 React Native UI 测试库或原生
 AsyncStorage。
 
-阶段10-C复验中Mobile共15个测试文件、287个用例，全部通过且无skip/only/todo。阶段10所属代码、
+阶段 11-B 复验中 Mobile 共 15 个测试文件、287 个用例全部通过。Web 与整仓 lint/typecheck、
+format check 和 Web build 通过；构建保留约 979 kB 主 JS chunk 的性能 warning。阶段10所属代码、
 测试、lint、typecheck、format、build、export、Metro和diff检查通过；Android 1538 modules/29
 files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录和本轮日志均已清理。
+
+阶段 11-C 再次完成相同 Web 与整仓 lint/typecheck/format/build，并保持 Mobile 15 个测试文件、
+287 个用例通过；`git diff --check`无输出。Vite 在5173完成十个路径的SPA fallback复验并清理进程、
+日志和dist。阶段 11-C 未执行人工浏览器验收。
 
 `expo install --check`仍报告8个既有Expo包需要对齐新的推荐补丁版本；所有当前版本与HEAD相同，
 阶段10未修改package、workspace或锁文件。该项作为已知基线例外，不阻塞本次Demo提交；后续通过
@@ -128,12 +141,17 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
 - CourtPoint 正式坐标契约和 PlayerProfile 范围仍未确认；当前只作 Demo 相对示意。
 - 普通 View 折线和响应式布局尚未在真机人工验收。
 - 当前没有相机、真实上传、播放器或真实算法。
+- Web Mock 登录不是正式权限系统，Route Guard 不是服务端授权；会话只在当前标签页有效。
+- Web 与 Mobile 不共享运行时数据，Web 不访问 Mobile DemoDataRepository。
+- Web 尚无 UI 自动测试；除根重定向和登录页外的人工交互及 1024～1920px 布局未验收。
 
 ## 下一阶段条件
 
-- 阶段9已提交为`d573475`；阶段10-C满足Demo代码提交条件，允许用户提交阶段10改动。
+- 阶段 10 已提交为 `66d890c`。
 - Expo Web、Expo Go、Android/iOS真机和Development Build人工验收仍未执行，不能据此声明真机
   体验通过。
-- Expo补丁对齐作为独立维护任务，建议在阶段11前处理，但不阻塞本次阶段10提交。
-- 阶段11尚未开始。
+- Expo 补丁对齐继续作为独立 maintenance 任务，不属于阶段 11 代码范围，也不阻塞阶段 11 基础
+  框架审查。
+- 阶段 11-C 代码与文档收口完成，等待人工认证、路由和导航验收后再判断提交资格；阶段 12 尚未
+  开始。
 - Real API 接入时新增 DTO/Adapter 和 Real Service，不让页面或 Repository 承担传输转换。
