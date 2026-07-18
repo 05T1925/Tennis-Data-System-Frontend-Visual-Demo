@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { getSafeAppErrorMessage } from '../../videos';
 import { webVideoQueryKeys } from '../../videos/queryKeys';
+import { invalidateWebOverviewStatistics } from '../../statistics/cache';
 import {
   getWebTaskPollingInterval,
   getWebTaskLogRevision,
@@ -150,6 +151,7 @@ export function useWebAnalysisDetail(options: {
           exact: true,
         }),
         queryClient.invalidateQueries({ queryKey: webVideoQueryKeys.lists() }),
+        invalidateWebOverviewStatistics(queryClient),
       ]);
       if (ownerRef.current === owner) setRetryState({ identity, pending: false, error: null });
       return true;

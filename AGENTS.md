@@ -2,12 +2,12 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。当前推进到阶段 13-C：Mobile 保持 Mock 认证、上传、
+本项目是网球视频分析系统 v0.1 的前端 Demo。当前推进到阶段 14-C：Mobile 保持 Mock 认证、上传、
 视频详情、受控轮询和完整 Result；Web 已具备受保护后台、独立 Snapshot v2、视频管理、五类详情
-视图、分析 retry、结构化结果、日志和 Web-private CV Demo Viewer。独立审查代码问题已最小修正，
-JSON Viewer 大数组批次与全局节点预算阻塞已最小修正，阶段 13 改动仍未提交；
-Result Summary 非有限值与 CV Copy 上下文文案已最小修正，关键人工交互验收已经完成，部分非阻塞
-扩展矩阵仍保持未执行；阶段 13-C 等待最终提交资格判断。
+视图、分析 retry、结构化结果、日志、Web-private CV Demo Viewer，以及由唯一 Snapshot 聚合的
+Overview 七项指标、四类 Recharts 图表、三个最近列表和仅开发环境可见的 Demo 数据控制。阶段 14
+改动未暂存、未提交；Overview 缓存一致性、完整活动任务控制和 Mutation Key 语义已最小修正，
+等待最终提交资格判断。
 Backend、Real API、真实 CV 与正式数据处理仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
@@ -26,6 +26,10 @@ v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据
 - `apps/web/src/features/videos`：Web VideoService、URL 参数、Query Hooks、Presentation、列表和详情。
 - `apps/web/src/features/analysis`：Web AnalysisService、Query/Mutation、详情 Tabs、JSON Viewer 和
   Demo JSON 复制/下载。
+- `apps/web/src/features/statistics`：Web-private Overview Aggregator、Statistics Service、Query、
+  Presentation 和 Recharts 图表。
+- `apps/web/src/features/demo-control`：仅开发环境使用的 reset、场景创建、force complete 与精确 Cache
+  更新。
 - `packages/shared-types`：`@tennis/shared-types`，提供 v0.1 稳定核心领域类型；不包含 UI、Service、
   DTO Adapter、运行时 Schema 或业务算法。
 - 包管理器：pnpm `11.7.0`；唯一锁文件为根 `pnpm-lock.yaml`。

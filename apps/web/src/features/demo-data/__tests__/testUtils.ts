@@ -1,4 +1,20 @@
-import type { WebDemoDataStorage } from '../types';
+import type { WebClock, WebDemoDataStorage } from '../types';
+
+export class MutableWebClock implements WebClock {
+  value: Date;
+
+  constructor(value = '2026-07-18T12:05:30.123Z') {
+    this.value = new Date(value);
+  }
+
+  now(): Date {
+    return new Date(this.value);
+  }
+
+  advance(milliseconds: number): void {
+    this.value = new Date(this.value.getTime() + milliseconds);
+  }
+}
 
 export class MemoryWebDemoDataStorage implements WebDemoDataStorage {
   value: string | null = null;

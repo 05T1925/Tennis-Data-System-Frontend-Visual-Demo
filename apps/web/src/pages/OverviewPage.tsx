@@ -1,49 +1,107 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import { Button, Flex, Result, Space, Spin, Tag, Typography } from 'antd';
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
+import { useWebAuth } from '../features/auth';
+import {
+  OverviewMetricCards,
+  OverviewRecentLists,
+  useWebOverviewStatistics,
+} from '../features/statistics';
+import { formatOverviewDateTime } from '../features/statistics/presentation';
+import { getSafeAppErrorMessage } from '../features/videos';
 
-const modules = [
-  { title: '视频管理', description: '上传视频与详情入口', path: '/videos' },
-  { title: '分析任务', description: '任务状态与失败排查入口', path: '/analysis-tasks' },
-  { title: 'CV 数据', description: '原始输出与结构化结果入口', path: '/cv-data' },
-  { title: '统计看板', description: '内部统计与趋势入口', path: '/statistics' },
-];
+const OverviewCharts = lazy(() => import('../features/statistics/components/OverviewCharts'));
+const WebDemoControlPanel = import.meta.env.DEV
+  ? lazy(() => import('../features/demo-control/components/WebDemoControlPanel'))
+  : null;
 
 export function OverviewPage() {
+  const { status, user } = useWebAuth();
+  const actorUserId = user?.id ?? '';
   const navigate = useNavigate();
+  const overviewQuery = useWebOverviewStatistics({
+    actorUserId,
+    enabled: status === 'authenticated',
+  });
 
+  if (overviewQuery.isPending) {
+    return (
+      <div className="overview-page-loading" aria-busy="true">
+        <Spin size="large" description="正在加载 Web Demo 总览" />
+      </div>
+    );
+  }
+
+  if (overviewQuery.isError || overviewQuery.data === undefined) {
+    return (
+      <Result
+        status="error"
+        title="系统总览加载失败"
+        subTitle={getSafeAppErrorMessage(overviewQuery.error, '总览统计暂时加载失败，请重试。')}
+        extra={<Button onClick={() => void overviewQuery.refetch()}>重新加载</Button>}
+      />
+    );
+  }
+
+  const data = overviewQuery.data;
   return (
-    <Space orientation="vertical" size="large" className="page-stack">
+    <Space orientation="vertical" size="large" className="page-stack overview-page">
       <PageIntro
         title="系统总览"
-        description="面向内部团队的网球视频分析数据看板。当前已完成 Mock 身份、受保护路由与后台基础布局。"
-        extra={<Tag color="green">阶段 11 基础框架</Tag>}
+        description="统计来自当前浏览器的 Web Demo Snapshot，不代表真实后台数据。"
+        extra={
+          <Flex gap={8} wrap align="center" justify="flex-end">
+            <Tag color="green">本地 Web Demo</Tag>
+            <Tag>统计日期 {data.referenceDate}</Tag>
+            <Button
+              icon={<ReloadOutlined />}
+              loading={overviewQuery.isFetching}
+              onClick={() => void overviewQuery.refetch()}
+            >
+              刷新总览
+            </Button>
+          </Flex>
+        }
       />
-      <Card>
-        <Typography.Title level={4}>当前范围</Typography.Title>
-        <Typography.Paragraph>
-          页面和导航入口已经建立，视频、任务、CV 输出和统计业务数据尚未接入。后续模块会通过 Web
-          Service 与 TanStack Query 增量实现。
-        </Typography.Paragraph>
-      </Card>
-      <Row gutter={[16, 16]}>
-        {modules.map((module) => (
-          <Col xs={24} md={12} xl={6} key={module.path}>
-            <Card className="module-card" title={module.title}>
-              <Typography.Paragraph type="secondary">{module.description}</Typography.Paragraph>
-              <Button
-                type="link"
-                icon={<ArrowRightOutlined />}
-                onClick={() => navigate(module.path)}
-              >
-                打开模块
-              </Button>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      <Flex gap={8} wrap>
+        <Typography.Text type="secondary">
+          生成时间：{formatOverviewDateTime(data.generatedAt)}
+        </Typography.Text>
+        {data.runtimeActiveCount > 0 && (
+          <Tag color="blue">{data.runtimeActiveCount} 个 Runtime 正在受控刷新</Tag>
+        )}
+      </Flex>
+      <OverviewMetricCards metrics={data.metrics} />
+      <Suspense
+        fallback={
+          <div className="overview-chart-loading" aria-busy="true">
+            <Spin description="正在加载图表" />
+          </div>
+        }
+      >
+        <OverviewCharts data={data} />
+      </Suspense>
+      <OverviewRecentLists
+        data={data}
+        onView={(videoId) => navigate(`/videos/${encodeURIComponent(videoId)}`)}
+      />
+      {WebDemoControlPanel !== null && (
+        <Suspense
+          fallback={
+            <div className="overview-control-loading" aria-busy="true">
+              <Spin description="正在加载开发控制" />
+            </div>
+          }
+        >
+          <WebDemoControlPanel
+            actorUserId={actorUserId}
+            controllableTasks={data.controllableTasks}
+          />
+        </Suspense>
+      )}
     </Space>
   );
 }

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
 import { getWebAnalysisEntityKeys } from '../../analysis/queryKeys';
+import { invalidateWebOverviewStatistics } from '../../statistics/cache';
 import { getSafeAppErrorMessage } from '../presentation';
 import { webVideoMutationKeys, webVideoQueryKeys } from '../queryKeys';
 import { webVideoService } from '../service';
@@ -78,7 +79,10 @@ export function useDeleteWebVideo(actorUserId: string) {
       for (const queryKey of getWebAnalysisEntityKeys(actorUserId, normalizedVideoId)) {
         queryClient.removeQueries({ queryKey, exact: true });
       }
-      await queryClient.invalidateQueries({ queryKey: webVideoQueryKeys.lists() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: webVideoQueryKeys.lists() }),
+        invalidateWebOverviewStatistics(queryClient),
+      ]);
       return true;
     } catch (error) {
       if (!owner.controller.signal.aborted && mountedRef.current) {

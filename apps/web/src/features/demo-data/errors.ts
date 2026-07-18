@@ -9,6 +9,11 @@ const messages: Record<string, string> = {
   WEB_ANALYSIS_NOT_FOUND: '当前视频没有分析任务。',
   WEB_ANALYSIS_RETRY_NOT_ALLOWED: '当前分析任务不能重新提交。',
   WEB_ANALYSIS_LOAD_FAILED: '分析数据暂时加载失败，请重试。',
+  WEB_STATISTICS_LOAD_FAILED: '总览统计暂时加载失败，请重试。',
+  WEB_DEMO_RESET_FAILED: 'Web Demo 数据暂时无法重置，请重试。',
+  WEB_DEMO_SCENARIO_CREATE_FAILED: 'Demo 场景暂时无法创建，请重试。',
+  WEB_ANALYSIS_FORCE_COMPLETE_NOT_ALLOWED: '当前分析任务不能立即完成。',
+  WEB_DEMO_CONTROL_FAILED: '开发环境 Demo 操作暂时无法完成，请重试。',
   WEB_DEMO_JSON_INVALID: 'Demo JSON 暂时无法生成。',
   WEB_DEMO_DOWNLOAD_FAILED: 'Demo JSON 暂时无法下载，请重试。',
 };

@@ -1,6 +1,8 @@
 import type { AnalysisResult, AnalysisTask } from '@tennis/shared-types';
 
 import { createWebDemoError, normalizeWebDemoError, throwIfAborted } from './errors';
+import { createWebAnalysisAssets } from './analysisFixtures';
+import { createUniqueLogId, createWebDemoScenarioEntities } from './demoControlFixtures';
 import { migrateWebDemoDataV1 } from './migration';
 import { materializeWebAnalysisRuntimes } from './runtime';
 import { webDemoDataSnapshotV1Schema, webDemoDataSnapshotV2Schema } from './schemas';
@@ -12,6 +14,8 @@ import type {
   WebCvDemoOutput,
   WebDemoDataSnapshot,
   WebDemoDataStorage,
+  WebDemoScenarioBundle,
+  WebDemoScenarioKind,
   WebVideoRecord,
 } from './types';
 import { systemWebClock } from './types';
@@ -40,6 +44,15 @@ export interface WebDemoDataRepository {
     options?: { signal?: AbortSignal },
   ): Promise<WebAnalysisTaskLogEntry[]>;
   retryAnalysis(videoId: string, options?: { signal?: AbortSignal }): Promise<AnalysisTask>;
+  resetDemoData(options?: { signal?: AbortSignal }): Promise<WebDemoDataSnapshot>;
+  createDemoScenario(
+    kind: WebDemoScenarioKind,
+    options?: { signal?: AbortSignal },
+  ): Promise<WebDemoScenarioBundle>;
+  forceCompleteAnalysis(
+    videoId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<WebDemoScenarioBundle>;
   deleteVideo(videoId: string, options?: { signal?: AbortSignal }): Promise<void>;
 }
 
@@ -49,6 +62,7 @@ export class DefaultWebDemoDataRepository implements WebDemoDataRepository {
   private snapshot: WebDemoDataSnapshot | null = null;
   private initialization: Promise<void> | null = null;
   private queue: Promise<void> = Promise.resolve();
+  private readonly issuedDemoControlIds = new Set<string>();
 
   constructor(storage: WebDemoDataStorage, clock: WebClock = systemWebClock) {
     this.storage = storage;
@@ -273,6 +287,149 @@ export class DefaultWebDemoDataRepository implements WebDemoDataRepository {
     });
   }
 
+  resetDemoData(options: { signal?: AbortSignal } = {}): Promise<WebDemoDataSnapshot> {
+    return this.enqueue(async () => {
+      throwIfAborted(options.signal);
+      const candidate = this.clone(createWebDemoSeed());
+      throwIfAborted(options.signal);
+      this.persist(candidate);
+      this.snapshot = candidate;
+      return this.clone(candidate);
+    });
+  }
+
+  createDemoScenario(
+    kind: WebDemoScenarioKind,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<WebDemoScenarioBundle> {
+    return this.enqueue(async () => {
+      throwIfAborted(options.signal);
+      await this.initialize();
+      const current = this.materialize(options.signal);
+      const entities = createWebDemoScenarioEntities(
+        current,
+        kind,
+        this.clock.now(),
+        this.issuedDemoControlIds,
+      );
+      const candidate = this.clone({
+        ...current,
+        videos: [...current.videos, entities.video],
+        analysisTasks: [...current.analysisTasks, entities.task],
+        analysisResults: entities.result
+          ? [...current.analysisResults, entities.result]
+          : current.analysisResults,
+        cvDemoOutputs: entities.cv
+          ? [...current.cvDemoOutputs, entities.cv]
+          : current.cvDemoOutputs,
+        analysisLogs: [...current.analysisLogs, ...entities.logs],
+      });
+      throwIfAborted(options.signal);
+      this.persist(candidate);
+      this.snapshot = candidate;
+      this.issuedDemoControlIds.add(entities.video.id);
+      this.issuedDemoControlIds.add(entities.task.id);
+      return createScenarioBundle(this.clone(candidate), entities.video.id);
+    });
+  }
+
+  forceCompleteAnalysis(
+    videoId: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<WebDemoScenarioBundle> {
+    return this.enqueue(async () => {
+      throwIfAborted(options.signal);
+      await this.initialize();
+      const current = this.materialize(options.signal);
+      throwIfAborted(options.signal);
+      const normalizedVideoId = videoId.trim();
+      const video = current.videos.find(({ id }) => id === normalizedVideoId);
+      if (!video) throw createWebDemoError('WEB_VIDEO_NOT_FOUND', { retryable: false });
+      const task = current.analysisTasks.find((candidate) => candidate.videoId === video.id);
+      if (!task) throw createWebDemoError('WEB_ANALYSIS_NOT_FOUND', { retryable: false });
+      if (video.uploadStatus !== 'uploaded' || !['queued', 'processing'].includes(task.status)) {
+        throw createWebDemoError('WEB_ANALYSIS_FORCE_COMPLETE_NOT_ALLOWED', { retryable: false });
+      }
+      const now = this.clock.now();
+      const nowMs = now.getTime();
+      const createdAtMs = Date.parse(task.createdAt);
+      const existingStartedAtMs = task.startedAt ? Date.parse(task.startedAt) : Number.NaN;
+      if (!Number.isFinite(createdAtMs) || createdAtMs > nowMs) {
+        throw createWebDemoError('WEB_ANALYSIS_FORCE_COMPLETE_NOT_ALLOWED', { retryable: false });
+      }
+      const startedAt =
+        Number.isFinite(existingStartedAtMs) && existingStartedAtMs <= nowMs
+          ? task.startedAt
+          : task.createdAt;
+      const timestamp = now.toISOString();
+      const completedTask: AnalysisTask = {
+        ...task,
+        status: 'succeeded',
+        stage: 'completed',
+        progress: 100,
+        errorCode: undefined,
+        errorMessage: undefined,
+        startedAt,
+        completedAt: timestamp,
+        updatedAt: timestamp,
+      };
+      const assets = createWebAnalysisAssets(video, completedTask, { createdAt: timestamp });
+      const runtimes = { ...current.analysisRuntimes };
+      delete runtimes[task.id];
+      const userLogId = createUniqueLogId(current, `${task.id}-force-complete-user`);
+      const snapshotWithUserLog = {
+        ...current,
+        analysisLogs: [
+          ...current.analysisLogs,
+          {
+            id: userLogId,
+            taskId: task.id,
+            timestamp,
+            level: 'info' as const,
+            audience: 'user' as const,
+            userMessage: '分析任务已由开发控制立即完成。',
+            stage: 'completed' as const,
+          },
+        ],
+      };
+      const developerLogId = createUniqueLogId(
+        snapshotWithUserLog,
+        `${task.id}-force-complete-developer`,
+      );
+      const candidate = this.clone({
+        ...current,
+        analysisTasks: current.analysisTasks.map((item) =>
+          item.id === task.id ? completedTask : item,
+        ),
+        analysisResults: [
+          ...current.analysisResults.filter((result) => result.videoId !== video.id),
+          assets.result,
+        ],
+        cvDemoOutputs: [
+          ...current.cvDemoOutputs.filter(({ output }) => output.videoId !== video.id),
+          assets.cv,
+        ],
+        analysisLogs: [
+          ...snapshotWithUserLog.analysisLogs,
+          {
+            id: developerLogId,
+            taskId: task.id,
+            timestamp,
+            level: 'info',
+            audience: 'developer',
+            developerMessage: 'Demo control forced the active task to completed state.',
+            stage: 'completed',
+          },
+        ],
+        analysisRuntimes: runtimes,
+      });
+      throwIfAborted(options.signal);
+      this.persist(candidate);
+      this.snapshot = candidate;
+      return createScenarioBundle(this.clone(candidate), video.id);
+    });
+  }
+
   deleteVideo(videoId: string, options: { signal?: AbortSignal } = {}): Promise<void> {
     return this.enqueue(async () => {
       throwIfAborted(options.signal);
@@ -307,6 +464,22 @@ export class DefaultWebDemoDataRepository implements WebDemoDataRepository {
       this.snapshot = candidate;
     });
   }
+}
+
+function createScenarioBundle(
+  snapshot: WebDemoDataSnapshot,
+  videoId: string,
+): WebDemoScenarioBundle {
+  const video = snapshot.videos.find(({ id }) => id === videoId);
+  const task = snapshot.analysisTasks.find((candidate) => candidate.videoId === videoId);
+  if (!video || !task) throw createWebDemoError('WEB_DEMO_CONTROL_FAILED');
+  return {
+    videoRecord: { video, analysisTask: task },
+    taskState: { task, runtimeActive: snapshot.analysisRuntimes[task.id] !== undefined },
+    result: snapshot.analysisResults.find((candidate) => candidate.videoId === videoId) ?? null,
+    cv: snapshot.cvDemoOutputs.find(({ output }) => output.videoId === videoId) ?? null,
+    logs: snapshot.analysisLogs.filter(({ taskId }) => taskId === task.id),
+  };
 }
 
 function isSaveError(error: unknown): boolean {

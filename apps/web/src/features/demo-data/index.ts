@@ -28,6 +28,8 @@ export type {
   WebDemoDataSnapshot,
   WebDemoDataSnapshotV1,
   WebDemoDataStorage,
+  WebDemoScenarioBundle,
+  WebDemoScenarioKind,
   WebVideoRecord,
 } from './types';
 export {
@@ -36,4 +38,5 @@ export {
   WEB_CV_DEMO_DISCLAIMER,
   WEB_CV_DEMO_SCHEMA,
   WEB_DEMO_DATA_VERSION,
+  systemWebClock,
 } from './types';

@@ -90,6 +90,16 @@ export type WebAnalysisTaskState = {
   runtimeActive: boolean;
 };
 
+export type WebDemoScenarioKind = 'success' | 'processing' | 'failed';
+
+export type WebDemoScenarioBundle = {
+  videoRecord: WebVideoRecord;
+  taskState: WebAnalysisTaskState;
+  result: AnalysisResult | null;
+  cv: WebCvDemoOutput | null;
+  logs: WebAnalysisTaskLogEntry[];
+};
+
 export type WebVideoRecord = {
   video: Video;
   analysisTask: AnalysisTask | null;
