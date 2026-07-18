@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
+import { webApiMode } from '../config/env';
 import {
   AnalysisLogsTab,
   AnalysisResultTab,
@@ -27,6 +28,7 @@ import {
 } from '../features/videos';
 
 export function VideoDetailPage() {
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
   const { videoId } = useParams<{ videoId: string }>();
   const normalizedVideoId = normalizeRouteVideoId(videoId);
   const { user } = useWebAuth();
@@ -121,7 +123,11 @@ export function VideoDetailPage() {
       {messageContext}
       <PageIntro
         title="视频详情"
-        description="查看 Web 私有 Demo 视频、结构化分析结果和非正式 CV Fixture。"
+        description={
+          isMockMode
+            ? '查看 Web 私有 Demo 视频、结构化分析结果和非正式 CV Fixture。'
+            : '查看 Real API Draft 视频和结构化分析结果；CV 正式契约尚未配置。'
+        }
         extra={
           <Flex gap={8} wrap>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(returnTarget)}>
@@ -131,8 +137,12 @@ export function VideoDetailPage() {
               复制视频 ID
             </Button>
             <Popconfirm
-              title="删除当前 Web Demo 视频？"
-              description="将同时删除关联 Task、Result、CV、日志和 Runtime；不影响 Mobile 或真实 Backend。"
+              title={isMockMode ? '删除当前 Web Demo 视频？' : '删除当前视频？'}
+              description={
+                isMockMode
+                  ? '将同时删除关联 Task、Result、CV、日志和 Runtime；不影响 Mobile 或真实 Backend。'
+                  : '将通过 Real API Draft 删除当前视频；服务端级联语义仍等待 Backend 确认。'
+              }
               okText="删除"
               cancelText="取消"
               okButtonProps={{ danger: true, loading: deleting }}
@@ -143,7 +153,7 @@ export function VideoDetailPage() {
               }}
             >
               <Button danger icon={<DeleteOutlined />} loading={deleting}>
-                删除 Demo 视频
+                {isMockMode ? '删除 Demo 视频' : '删除视频'}
               </Button>
             </Popconfirm>
           </Flex>

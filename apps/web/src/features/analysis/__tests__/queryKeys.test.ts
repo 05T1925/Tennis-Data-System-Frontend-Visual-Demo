@@ -34,6 +34,18 @@ describe('Web Analysis Query policy', () => {
     expect(getWebTaskPollingInterval({ task: processing, runtimeActive: false }, false)).toBe(
       false,
     );
+    expect(
+      getWebTaskPollingInterval({ task: queued, runtimeActive: false, pollingActive: true }, false),
+    ).toBe(3_000);
+    expect(
+      getWebTaskPollingInterval(
+        { task: processing, runtimeActive: false, pollingActive: true },
+        false,
+      ),
+    ).toBe(2_000);
+    expect(
+      getWebTaskPollingInterval({ task: queued, runtimeActive: true, pollingActive: false }, false),
+    ).toBe(false);
     expect(getWebTaskPollingInterval({ task: succeeded, runtimeActive: true }, false)).toBe(false);
     expect(getWebTaskPollingInterval({ task: queued, runtimeActive: true }, true)).toBe(false);
   });

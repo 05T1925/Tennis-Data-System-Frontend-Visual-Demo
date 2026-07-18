@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton, AppCard, PageShell } from '@/components';
+import { mobileApiMode } from '@/config/env';
 import {
   AgreementCheckbox,
   AuthTextField,
@@ -34,6 +35,7 @@ export default function LoginScreen() {
   });
 
   const loginInProgress = activeOperation === 'password-login' || activeOperation === 'demo-login';
+  const isMockMode = mobileApiMode.status === 'ready' && mobileApiMode.mode === 'mock';
 
   const clearServiceError = () => {
     if (authError) clearAuthError();
@@ -64,13 +66,19 @@ export default function LoginScreen() {
         </View>
         <Text style={styles.eyebrow}>TENNIS VIDEO LAB</Text>
         <Text style={styles.title}>让每一次训练，都有数据可循</Text>
-        <Text style={styles.description}>使用公开 Mock 账号登录，体验网球视频分析产品流程。</Text>
+        <Text style={styles.description}>
+          {isMockMode
+            ? '使用公开 Mock 账号登录，体验网球视频分析产品流程。'
+            : 'Real API 草案模式，当前连接的是前端 Draft Contract。'}
+        </Text>
       </View>
 
       <AppCard>
-        <Text style={styles.cardTitle}>登录 Demo</Text>
+        <Text style={styles.cardTitle}>{isMockMode ? '登录 Demo' : '登录'}</Text>
         <Text style={styles.cardDescription}>
-          账号仅用于本地演示，不连接真实认证系统。密码不会保存到设备。
+          {isMockMode
+            ? '账号仅用于本地演示，不连接真实认证系统。密码不会保存到设备。'
+            : '当前能力不代表正式后端已经完成。Real Session 仅保存在运行内存中。'}
         </Text>
 
         <Controller
@@ -145,20 +153,24 @@ export default function LoginScreen() {
           loading={activeOperation === 'password-login'}
           onPress={() => void submitPasswordLogin()}
         />
-        <AppButton
-          disabled={loginInProgress}
-          label="使用 Demo 账号进入"
-          loading={activeOperation === 'demo-login'}
-          onPress={() => void submitDemoLogin()}
-          variant="secondary"
-        />
+        {isMockMode ? (
+          <AppButton
+            disabled={loginInProgress}
+            label="使用 Demo 账号进入"
+            loading={activeOperation === 'demo-login'}
+            onPress={() => void submitDemoLogin()}
+            variant="secondary"
+          />
+        ) : null}
       </AppCard>
 
-      <View style={styles.credentials}>
-        <Text style={styles.credentialsTitle}>公开 Demo 凭据</Text>
-        <Text style={styles.notice}>demo@tennis.local / TennisDemo123!</Text>
-        <Text style={styles.notice}>网络错误场景：network@tennis.local / NetworkDemo123!</Text>
-      </View>
+      {isMockMode ? (
+        <View style={styles.credentials}>
+          <Text style={styles.credentialsTitle}>公开 Demo 凭据</Text>
+          <Text style={styles.notice}>demo@tennis.local / TennisDemo123!</Text>
+          <Text style={styles.notice}>网络错误场景：network@tennis.local / NetworkDemo123!</Text>
+        </View>
+      ) : null}
     </PageShell>
   );
 }

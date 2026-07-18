@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton, AppCard, EmptyState, PageShell, SectionTitle } from '@/components';
+import { mobileApiMode } from '@/config/env';
 import { theme } from '@/theme/tokens';
 
 import {
@@ -99,6 +100,7 @@ export function AnalysisResultContent({
   onBackToDetail,
   onBackToList,
 }: AnalysisResultContentProps) {
+  const isMockMode = mobileApiMode.status === 'ready' && mobileApiMode.mode === 'mock';
   const actions = { onBackToDetail, onBackToList };
 
   if (!state.identityValid) {
@@ -226,14 +228,18 @@ export function AnalysisResultContent({
     <PageShell
       title="完整分析结果"
       description="查看本次视频的核心指标与静态可视化。"
-      eyebrow="Demo分析数据"
+      eyebrow={isMockMode ? 'Demo分析数据' : 'Real API Draft'}
       edges={['top', 'bottom', 'left', 'right']}
       footer={<ResultActions {...actions} />}
     >
       <AppCard>
         <SectionTitle
-          title="本地Mock结果"
-          description="当前结果来自本地Mock数据，仅用于验证产品展示流程。"
+          title={isMockMode ? '本地 Mock 结果' : 'API Draft 结果'}
+          description={
+            isMockMode
+              ? '当前结果来自本地 Mock 数据，仅用于验证产品展示流程。'
+              : '当前结果来自前端 Draft Contract，不代表正式后端或算法契约。'
+          }
         />
         <Text style={styles.notice}>各项数据不构成算法精度、专业评级或正式比赛裁决承诺。</Text>
       </AppCard>

@@ -4,19 +4,20 @@
 
 ## 当前阶段
 
-阶段 14-C 修正与复验中：Web Overview 已接入唯一 Snapshot v2 的七项指标、最近 7 天新增趋势、十状态桶、分析
-成功率、六个时长桶和三个最近列表；Recharts 3.9.2 通过动态 chunk 加载。开发环境新增独立
-DemoControlService，支持原子 reset、创建成功/静态 processing/分析失败场景，以及让任意合法 active
-Task 立即完成。retry、删除和开发控制成功后统一失效 Overview Statistics，生产 build 不包含控制
-UI。当前分支为 `feature/stage-14-web-overview-statistics`，基线 HEAD 为阶段 13 提交 `c52caf2`；阶段
-14 改动未暂存、未提交，等待 ChatGPT 最终提交资格判断。Backend、
-Real API 和真实 CV 仍未实现。
+阶段 15-C 最小修正与复验中：分支 `feature/stage-15-api-mode-boundary`，基线 HEAD
+`ba4f5e18004ee0de68df1dc33c7af2616ada54c2`。两端新增默认 Mock、显式 Real API Draft 的严格模式
+解析、惰性 Factory、原生 fetch Client、内存 Token Store、Zod DTO/Adapter 和 mode-aware Session。
+部分 Auth/Video/Analysis 方法达到 Level 2 Draft；15-C 收口远程 Task 轮询、本地认证清理、Result
+双向引用和列表全量计数。其余不明确契约保持 Level 1，不回退 Mock。阶段 15 改动未暂存、未提交，
+等待最终提交资格判断。Backend、真实上传、数据库、真实 CV 与
+Supabase 仍未实现；Local Contract Stub 不代表 Backend。
 
 ## 状态摘要
 
 Mobile 保持阶段 4 Mock 登录/Session 和阶段 5 首页能力，新增唯一 DemoDataRepository。Video、
 Analysis、Statistics 三个 Mock Service 共享 version 1 Snapshot、Zod Runtime Schema、内存状态和
-AsyncStorage `tennis.demo.data.v1` 持久化。Auth key 和认证代码未修改。
+AsyncStorage `tennis.demo.data.v1` 持久化。Auth Session v2 按 mode 隔离，Real Token 只在内存中；
+远端 logout 或登录提交失败不阻止本地凭据和身份清理。
 
 Web 新增独立 Mock 管理员身份、版本化 sessionStorage、恢复/登录/退出编排、Protected 与
 Public-only Guard、根重定向和安全 404。Ant Design 后台 Layout 提供可折叠 Sidebar、Header、
@@ -38,9 +39,9 @@ VideoService 已向后兼容扩展列表、详情、创建元数据、模拟上�
 开始、查询 Task/Result、确定性阶段推进、ball_tracking 固定失败及原地 retry。StatisticsService
 不再维护独立统计 JSON，而是从当前用户 Repository 动态聚合。
 
-上传和分析采用时间戳惰性推进，不运行后台 Timer；App 重启后下次查询会追赶。固定 Seed 包含
-分析成功、处理中、失败和上传失败样例。当前仍是 Mock Service/Data 层，Real API、Backend、CV
-和数据库均未实现。
+上传和 Mock 分析采用时间戳惰性推进，不运行后台 Timer；App 重启后下次查询会追赶。固定 Seed 包含
+分析成功、处理中、失败和上传失败样例。Mock 仍是完整 Demo 数据闭环；部分 Real API Draft Service
+已实现前端 HTTP 边界，但 Backend、真实上传、CV 和数据库均未实现。
 
 Mobile 上传页现支持从系统相册单选视频，覆盖 Native 权限、limited、系统设置、Web 用户手势和
 Android pending result。pending result 与用户主动重新选择采用“最新请求优先”保护，避免旧结果覆
@@ -90,21 +91,21 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 
 ## 模块状态
 
-| 模块                    | 状态             | 真实说明                                                                                     |
-| ----------------------- | ---------------- | -------------------------------------------------------------------------------------------- |
-| Mobile Auth             | ✅ 阶段 4 保持   | Auth、Session key、Provider 和路由未修改。                                                   |
-| Mobile 首页             | ✅ 阶段 5 保持   | 两个 Query、五种场景、四态和 UI 未修改。                                                     |
-| Demo Data               | ✅ 阶段 6-C 收口 | 单例 Repository、严格 Schema、可重试初始化、写队列、reset。                                  |
-| Video Service           | ✅ Mock + 列表   | list 接入 Query、场景、筛选、刷新、卡片和详情入口。                                          |
-| Analysis Service        | ✅ Mock 底座     | start/task/result/retry 与惰性阶段推进；无 CV。                                              |
-| Statistics Service      | ✅ 动态聚合      | 从当前 Repository 数据计算首页统计。                                                         |
-| Mobile 上传页           | ✅ Mock 闭环     | 相册选择、表单、进度、fail-once、retry、离开提示和导航。                                     |
-| Mobile 视频列表         | ✅ 阶段 8-C      | 刷新竞态、retry 错误生命周期和文档事实已收口。                                               |
-| Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。                                             |
-| Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                                                       |
-| 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                                                           |
-| Web Dashboard           | ⏳ 阶段 14-C     | Overview、Recharts、最近列表和 DEV Demo Control 已实现并完成最小修正，等待最终提交资格判断。 |
-| Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                                                               |
+| 模块                    | 状态              | 真实说明                                                                   |
+| ----------------------- | ----------------- | -------------------------------------------------------------------------- |
+| Mobile Auth             | ✅ Mock + Draft   | Mock Session 保持；Real Token 内存级且本地退出不受远端失败阻断。           |
+| Mobile 首页             | ✅ 阶段 5 保持    | 两个 Query、五种场景、四态和 UI 未修改。                                   |
+| Demo Data               | ✅ 阶段 6-C 收口  | 单例 Repository、严格 Schema、可重试初始化、写队列、reset。                |
+| Video Service           | ✅ Mock + 列表    | list 接入 Query、场景、筛选、刷新、卡片和详情入口。                        |
+| Analysis Service        | ✅ Mock 底座      | start/task/result/retry 与惰性阶段推进；无 CV。                            |
+| Statistics Service      | ✅ 动态聚合       | 从当前 Repository 数据计算首页统计。                                       |
+| Mobile 上传页           | ✅ Mock 闭环      | 相册选择、表单、进度、fail-once、retry、离开提示和导航。                   |
+| Mobile 视频列表         | ✅ 阶段 8-C       | 刷新竞态、retry 错误生命周期和文档事实已收口。                             |
+| Mobile 视频详情         | ✅ 阶段 9-B       | 详情、受控轮询、retry 和简要 Result 摘要已接入。                           |
+| Mobile 完整结果         | ✅ 阶段 10-C      | 独立审查、文档事实和提交前验证已收口。                                     |
+| 其他 Mobile 业务页面    | ⏳ 仍为骨架       | 完整统计尚未实现。                                                         |
+| Web Dashboard           | ✅ 阶段 14 已提交 | Overview、Recharts、最近列表和 DEV Demo Control 已完成；提交为 `ba4f5e1`。 |
+| Real API / Backend / CV | ⏳ Partial Draft  | 部分前端 Draft HTTP 已实现；Backend、真实上传与真实 CV 未接入。            |
 
 ## 数据、并发与安全边界
 
@@ -118,10 +119,11 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 
 ## 测试与依赖
 
-当前阶段 14-C Web 24 个测试文件、209 个用例通过，Mobile 保持 15 个测试文件、287 个用例；Web 和
-整仓 lint/typecheck、format check、Web build 及 `git diff --check` 重新验证。当前 Web build 转换
-3841 modules，主 JS 1,372.91 kB、gzip 431.26 kB；动态 OverviewCharts chunk 383.90 kB、gzip
-109.06 kB，保留大于 500 kB chunk warning。阶段 14 唯一新增直接依赖为 `recharts@3.9.2`。
+阶段 15-C 最终验证为 Mobile 17 个测试文件、332 个用例，Web 29 个测试文件、252 个用例全部通过；
+两端及整仓 lint/typecheck、format check、Web build 和 `git diff --check` 通过。Web build 转换 3857
+modules，主 JS 1,384.65 kB、gzip 435.67 kB；动态 OverviewCharts chunk 383.90 kB、gzip 109.22 kB，
+惰性 Mock service chunk 8.39 kB、gzip 3.01 kB，保留大于 500 kB warning。阶段 15 未新增、删除或
+升级依赖；阶段 14 唯一新增直接依赖仍为 `recharts@3.9.2`。
 
 历史节点：阶段 12-B 为 Web 新增 `zod@^4.4.3`、`vitest@^4.1.10` 和 test script；阶段 12-C 增强边界
 测试。阶段 13-C 提交前结果为 Web 15 个测试文件、167 个用例，build 转换 3269 modules，主 JS
@@ -177,8 +179,9 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
 
 - 阶段 12 已提交并关闭。
 - 阶段 13 已提交为 `c52caf2`。
-- 阶段 14 完成最小修正与复验后，等待 ChatGPT 最终提交资格判断。
-- 阶段 15、16 尚未开始。
+- 阶段 14 已提交并关闭，提交为 `ba4f5e1`。
+- 阶段 15-C 正在进行最小修正与复验，改动未提交，等待最终提交资格判断。
+- 阶段 16 尚未开始。
 - Expo Web、Expo Go、Android/iOS真机和Development Build人工验收仍未执行，不能据此声明真机
   体验通过。
 - Expo 的 8 个补丁版本差异继续作为独立 maintenance 任务，不属于阶段 14。

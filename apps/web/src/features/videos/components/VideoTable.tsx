@@ -12,6 +12,7 @@ type VideoTableProps = {
   pageSize: WebVideoPageSize;
   loading: boolean;
   deletingVideoIds: ReadonlySet<string>;
+  isMockMode: boolean;
   onPageChange(page: number, pageSize: number): void;
   onView(videoId: string): void;
   onCopy(videoId: string): void;
@@ -25,6 +26,7 @@ export function VideoTable({
   pageSize,
   loading,
   deletingVideoIds,
+  isMockMode,
   onPageChange,
   onView,
   onCopy,
@@ -115,15 +117,19 @@ export function VideoTable({
               />
             </Tooltip>
             <Popconfirm
-              title="删除当前 Web Demo 视频？"
-              description="将同时删除关联分析任务，不影响 Mobile，也不会调用真实 Backend；当前 UI 内不可撤销。"
+              title={isMockMode ? '删除当前 Web Demo 视频？' : '删除当前视频？'}
+              description={
+                isMockMode
+                  ? '将同时删除关联分析任务，不影响 Mobile，也不会调用真实 Backend；当前 UI 内不可撤销。'
+                  : '将通过 Real API Draft 删除当前视频；服务端级联语义仍等待 Backend 确认。'
+              }
               okText="删除"
               cancelText="取消"
               okButtonProps={{ danger: true, loading: deleting }}
               disabled={deleting}
               onConfirm={() => onDelete(item.videoId)}
             >
-              <Tooltip title="删除 Demo 视频">
+              <Tooltip title={isMockMode ? '删除 Demo 视频' : '删除视频'}>
                 <Button
                   danger
                   type="text"

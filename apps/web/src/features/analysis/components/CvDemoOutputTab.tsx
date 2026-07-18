@@ -2,6 +2,7 @@ import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Descriptions, Flex, message, Space, Spin, Tag } from 'antd';
 import { useMemo } from 'react';
 
+import { webApiMode } from '../../../config/env';
 import { copyTextToClipboard, getSafeAppErrorMessage } from '../../videos';
 import type { WebAnalysisDetailState } from '../hooks/useWebAnalysisDetail';
 import { downloadDemoJson, safeStringifyDemoJson } from '../jsonTransfer';
@@ -16,6 +17,7 @@ export function CvDemoOutputTab({
   analysis: WebAnalysisDetailState;
   videoId: string;
 }) {
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
   const [messageApi, contextHolder] = message.useMessage();
   const cv = analysis.canDisplayCv ? analysis.cvQuery.data : null;
   const serialized = useMemo(() => {
@@ -29,14 +31,14 @@ export function CvDemoOutputTab({
 
   if (!analysis.cvEnabled || !analysis.canDisplayCv) {
     if (analysis.cvEnabled && analysis.cvQuery.isPending) {
-      return <Spin description="正在加载 CV Demo 数据" />;
+      return <Spin description={isMockMode ? '正在加载 CV Demo 数据' : '正在加载 CV API 数据'} />;
     }
     if (analysis.cvEnabled && analysis.cvQuery.isError) {
       return (
         <Alert
           type="error"
           showIcon
-          title="CV Demo 数据加载失败"
+          title={isMockMode ? 'CV Demo 数据加载失败' : 'CV API 数据加载失败'}
           action={<Button onClick={() => void analysis.cvQuery.refetch()}>重新加载</Button>}
         />
       );
@@ -44,7 +46,7 @@ export function CvDemoOutputTab({
     return (
       <AnalysisStateNotice
         state={analysis}
-        dataLabel="CV Demo 数据"
+        dataLabel={isMockMode ? 'CV Demo 数据' : 'CV API 数据'}
         onReload={() => void analysis.cvQuery.refetch()}
       />
     );

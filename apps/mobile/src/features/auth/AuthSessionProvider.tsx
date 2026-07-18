@@ -11,8 +11,11 @@ import {
 
 import type { AppError } from '@tennis/shared-types';
 
+import { mobileApiMode } from '@/config/env';
+
 import { createAuthError, toAuthError } from './authErrors';
-import { demoCredentials, MockAuthService } from './services/MockAuthService';
+import { authService } from './service';
+import { demoCredentials } from './services/MockAuthService';
 import { clearAuthSession, loadAuthSession, saveAuthSession } from './storage/authSessionStorage';
 import type {
   AuthOperation,
@@ -21,8 +24,8 @@ import type {
   AuthStatus,
   LoginCredentials,
 } from './types';
+import { completeMobileLocalSignOut } from './services/AuthService';
 
-const authService = new MockAuthService();
 const AuthSessionContext = createContext<AuthSessionValue | null>(null);
 
 export function AuthSessionProvider({ children }: PropsWithChildren) {
@@ -39,12 +42,28 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
 
     async function restoreSession() {
       try {
+        if (mobileApiMode.status !== 'ready' || mobileApiMode.mode !== 'mock') {
+          authService.clearLocalCredentials?.();
+          await clearAuthSession();
+          if (active) {
+            setSession(null);
+            setStatus('unauthenticated');
+          }
+          return;
+        }
         const restoredSession = await loadAuthSession();
         if (!active) return;
-
-        setSession(restoredSession);
-        setStatus(restoredSession ? 'authenticated' : 'unauthenticated');
+        const validatedSession = restoredSession
+          ? await authService.restore(restoredSession)
+          : null;
+        if (!active) {
+          authService.clearLocalCredentials?.();
+          return;
+        }
+        setSession(validatedSession);
+        setStatus(validatedSession ? 'authenticated' : 'unauthenticated');
       } catch (error) {
+        authService.clearLocalCredentials?.();
         const restoreError = toAuthError(error);
 
         if (restoreError.code === 'INVALID_STORED_SESSION') {
@@ -92,14 +111,19 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
       try {
         const nextSession = await authService.login(credentials);
         // Authentication is not committed until persistence succeeds.
-        await saveAuthSession(nextSession);
+        if (nextSession.mode === 'mock') await saveAuthSession(nextSession);
 
-        if (mountedRef.current) {
-          setSession(nextSession);
-          setStatus('authenticated');
+        if (!mountedRef.current) {
+          authService.clearLocalCredentials?.();
+          return;
         }
+        setSession(nextSession);
+        setStatus('authenticated');
       } catch (error) {
+        authService.clearLocalCredentials?.();
         if (mountedRef.current) {
+          setSession(null);
+          setStatus('unauthenticated');
           setAuthError(toAuthError(error));
         }
       } finally {
@@ -117,7 +141,13 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
     [performLogin],
   );
 
-  const signInDemo = useCallback(() => performLogin(demoCredentials, 'demo-login'), [performLogin]);
+  const signInDemo = useCallback(
+    () =>
+      mobileApiMode.status === 'ready' && mobileApiMode.mode === 'mock'
+        ? performLogin(demoCredentials, 'demo-login')
+        : Promise.resolve(),
+    [performLogin],
+  );
 
   const signOut = useCallback(async () => {
     if (operationRef.current !== null) return;
@@ -126,24 +156,17 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
     setActiveOperation('logout');
     setAuthError(null);
 
-    try {
-      await authService.logout(session);
-      // Keep the in-memory identity until durable session removal succeeds.
-      await clearAuthSession();
+    const outcome = await completeMobileLocalSignOut(authService, session, clearAuthSession);
 
-      if (mountedRef.current) {
-        setSession(null);
-        setStatus('unauthenticated');
-      }
-    } catch (error) {
-      if (mountedRef.current) {
-        setAuthError(toAuthError(error));
-      }
-    } finally {
-      operationRef.current = null;
-      if (mountedRef.current) {
-        setActiveOperation(null);
-      }
+    if (mountedRef.current) {
+      setSession(outcome.session);
+      setStatus(outcome.status);
+      if (outcome.error) setAuthError(toAuthError(outcome.error));
+    }
+
+    operationRef.current = null;
+    if (mountedRef.current) {
+      setActiveOperation(null);
     }
   }, [session]);
 

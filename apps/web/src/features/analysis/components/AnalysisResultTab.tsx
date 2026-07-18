@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Descriptions, Space, Spin, Statistic, Tag } from 'antd';
 
+import { webApiMode } from '../../../config/env';
 import { formatDateTime } from '../../videos';
 import type { WebAnalysisDetailState } from '../hooks/useWebAnalysisDetail';
 import {
@@ -10,6 +11,7 @@ import {
 import { AnalysisStateNotice } from './AnalysisStateNotice';
 
 export function AnalysisResultTab({ analysis }: { analysis: WebAnalysisDetailState }) {
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
   const resultQuery = analysis.resultQuery;
   if (!analysis.resultEnabled || !analysis.canDisplayResult) {
     if (analysis.resultEnabled && resultQuery.isPending)
@@ -40,8 +42,12 @@ export function AnalysisResultTab({ analysis }: { analysis: WebAnalysisDetailSta
       <Alert
         type="info"
         showIcon
-        title="本地 Demo 结构化结果"
-        description="以下指标来自确定性前端 Fixture，不代表真实算法输出、专业评级或正式比赛结论。"
+        title={isMockMode ? '本地 Demo 结构化结果' : 'Real API Draft 结构化结果'}
+        description={
+          isMockMode
+            ? '以下指标来自确定性前端 Fixture，不代表真实算法输出、专业评级或正式比赛结论。'
+            : '以下数据来自前端 Draft Contract，不代表正式算法契约、专业评级或正式比赛结论。'
+        }
       />
       <Card
         title="结果摘要"
@@ -117,7 +123,7 @@ export function AnalysisResultTab({ analysis }: { analysis: WebAnalysisDetailSta
           <Alert type="warning" showIcon title="PlayerProfile 未提供，其他结果仍可查看。" />
         )}
       </Card>
-      <Card title="开发信息" extra={<Tag>Demo</Tag>}>
+      <Card title="开发信息" extra={<Tag>{isMockMode ? 'Demo' : 'Draft'}</Tag>}>
         <Descriptions bordered column={{ xs: 1, md: 2 }}>
           <Descriptions.Item label="Result version">{result.version}</Descriptions.Item>
           <Descriptions.Item label="生成时间">{formatDateTime(result.createdAt)}</Descriptions.Item>

@@ -88,6 +88,7 @@ export type WebAnalysisRuntime = {
 export type WebAnalysisTaskState = {
   task: AnalysisTask | null;
   runtimeActive: boolean;
+  pollingActive?: boolean;
 };
 
 export type WebDemoScenarioKind = 'success' | 'processing' | 'failed';

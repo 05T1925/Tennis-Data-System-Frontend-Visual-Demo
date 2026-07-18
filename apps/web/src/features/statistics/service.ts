@@ -1,8 +1,5 @@
-import { systemWebClock, webDemoDataRepository } from '../demo-data';
-import { MockWebStatisticsService } from './mockWebStatisticsService';
+import { webServices } from '../../api/webServices';
+import { systemWebClock } from '../demo-data/types';
 
 export const webStatisticsClock = systemWebClock;
-export const webStatisticsService = new MockWebStatisticsService(
-  webDemoDataRepository,
-  webStatisticsClock,
-);
+export const webStatisticsService = webServices.webStatisticsService;

@@ -1,9 +1,3 @@
-import { createIdGenerator, demoDataRepository, systemClock } from '@/features/demo-data';
+import { mobileServices } from '@/api/mobileServices';
 
-import { MockAnalysisService } from './services/MockAnalysisService';
-
-export const analysisService = new MockAnalysisService(
-  demoDataRepository,
-  systemClock,
-  createIdGenerator(systemClock),
-);
+export const analysisService = mobileServices.analysisService;

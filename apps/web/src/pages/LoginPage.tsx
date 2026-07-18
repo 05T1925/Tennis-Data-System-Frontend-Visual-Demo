@@ -1,12 +1,14 @@
 import { LockOutlined, LoginOutlined, MailOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Form, Input, Space, Typography } from 'antd';
 
+import { webApiMode } from '../config/env';
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, useWebAuth } from '../features/auth';
 import type { WebLoginCredentials } from '../features/auth';
 
 export function LoginPage() {
   const { activeOperation, authError, login, signInDemo, clearAuthError } = useWebAuth();
   const isBusy = activeOperation !== null;
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
 
   return (
     <main className="login-page" aria-busy={isBusy}>
@@ -20,7 +22,15 @@ export function LoginPage() {
       </section>
       <Card className="login-card" title="管理员登录" variant="outlined">
         <Space orientation="vertical" size="middle" className="full-width">
-          <Alert type="warning" showIcon title="当前为本地 Mock 管理员登录，不代表正式权限系统。" />
+          <Alert
+            type="warning"
+            showIcon
+            title={
+              isMockMode
+                ? '当前为本地 Mock 管理员登录，不代表正式权限系统。'
+                : 'Real API 草案模式，不代表正式后端或正式权限系统已经完成。'
+            }
+          />
           {authError !== null && (
             <Alert
               type="error"
@@ -71,21 +81,27 @@ export function LoginPage() {
               登录
             </Button>
           </Form>
-          <Button
-            block
-            loading={activeOperation === 'demo-login'}
-            disabled={isBusy && activeOperation !== 'demo-login'}
-            onClick={() => void signInDemo()}
-          >
-            使用 Demo 管理员进入
-          </Button>
-          <div className="demo-credentials">
-            <Typography.Text strong>公开 Demo 凭据</Typography.Text>
-            <Typography.Text code>{DEMO_ADMIN_EMAIL}</Typography.Text>
-            <Typography.Text code>{DEMO_ADMIN_PASSWORD}</Typography.Text>
-          </div>
+          {isMockMode && (
+            <>
+              <Button
+                block
+                loading={activeOperation === 'demo-login'}
+                disabled={isBusy && activeOperation !== 'demo-login'}
+                onClick={() => void signInDemo()}
+              >
+                使用 Demo 管理员进入
+              </Button>
+              <div className="demo-credentials">
+                <Typography.Text strong>公开 Demo 凭据</Typography.Text>
+                <Typography.Text code>{DEMO_ADMIN_EMAIL}</Typography.Text>
+                <Typography.Text code>{DEMO_ADMIN_PASSWORD}</Typography.Text>
+              </div>
+            </>
+          )}
           <Typography.Text type="secondary">
-            Backend、Real API 和正式权限均未接入；当前登录仅验证本地前端流程。
+            {isMockMode
+              ? 'Backend、Real API 和正式权限均未接入；当前登录仅验证本地前端流程。'
+              : '当前仅验证前端 Draft Contract；真实 Backend 和正式管理员授权尚未接入。'}
           </Typography.Text>
         </Space>
       </Card>

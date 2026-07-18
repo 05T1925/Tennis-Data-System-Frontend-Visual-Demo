@@ -1,11 +1,15 @@
 import type { AppError, User } from '@tennis/shared-types';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { webApiMode } from '../../config/env';
 import { WebAuthContext } from './WebAuthContext';
-import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, mockWebLogin, mockWebLogout } from './mockWebAuth';
+import { commitWebSessionLocally, completeWebLocalSignOut } from './WebAuthService';
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from './mockWebAuth';
+import { webAuthService } from './service';
 import type {
   WebAuthContextValue,
   WebAuthOperation,
+  WebAuthSession,
   WebAuthStatus,
   WebLoginCredentials,
 } from './types';
@@ -38,20 +42,39 @@ export function WebAuthProvider({ children }: WebAuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [activeOperation, setActiveOperation] = useState<WebAuthOperation | null>(null);
   const [authError, setAuthError] = useState<AppError | null>(null);
+  const sessionRef = useRef<WebAuthSession | null>(null);
   const operationLockRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       if (cancelled) {
         return;
       }
 
       try {
-        const restoredUser = restoreWebSession();
-        setUser(restoredUser);
-        setStatus(restoredUser === null ? 'unauthenticated' : 'authenticated');
+        const mode = webApiMode.status === 'ready' ? webApiMode.mode : null;
+        const storedSession = restoreWebSession(mode);
+        const restoredSession = storedSession ? await webAuthService.restore(storedSession) : null;
+        if (cancelled) {
+          webAuthService.clearLocalCredentials?.();
+          return;
+        }
+        if (restoredSession) {
+          commitWebSessionLocally(webAuthService, restoredSession, saveWebSession, clearWebSession);
+        }
+        sessionRef.current = restoredSession;
+        setUser(restoredSession?.user ?? null);
+        setStatus(restoredSession === null ? 'unauthenticated' : 'authenticated');
       } catch (error) {
+        webAuthService.clearLocalCredentials?.();
+        try {
+          clearWebSession();
+        } catch {
+          // Keep the original restore failure as the user-facing error.
+        }
+        sessionRef.current = null;
+        if (cancelled) return;
         setUser(null);
         setAuthError(normalizeAuthError(error));
         setStatus('unauthenticated');
@@ -73,11 +96,24 @@ export function WebAuthProvider({ children }: WebAuthProviderProps) {
       setActiveOperation(operation);
       setAuthError(null);
       try {
-        const authenticatedUser = await mockWebLogin(credentials);
-        saveWebSession(authenticatedUser);
-        setUser(authenticatedUser);
+        const authenticatedSession = await webAuthService.login(credentials);
+        commitWebSessionLocally(
+          webAuthService,
+          authenticatedSession,
+          saveWebSession,
+          clearWebSession,
+        );
+        sessionRef.current = authenticatedSession;
+        setUser(authenticatedSession.user);
         setStatus('authenticated');
       } catch (error) {
+        webAuthService.clearLocalCredentials?.();
+        try {
+          clearWebSession();
+        } catch {
+          // Keep the original login failure as the user-facing error.
+        }
+        sessionRef.current = null;
         setUser(null);
         setStatus('unauthenticated');
         setAuthError(normalizeAuthError(error));
@@ -95,7 +131,10 @@ export function WebAuthProvider({ children }: WebAuthProviderProps) {
   );
 
   const signInDemo = useCallback(
-    () => performLogin({ email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD }, 'demo-login'),
+    () =>
+      webApiMode.status === 'ready' && webApiMode.mode === 'mock'
+        ? performLogin({ email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD }, 'demo-login')
+        : Promise.resolve(),
     [performLogin],
   );
 
@@ -107,17 +146,17 @@ export function WebAuthProvider({ children }: WebAuthProviderProps) {
     operationLockRef.current = true;
     setActiveOperation('logout');
     setAuthError(null);
-    try {
-      await mockWebLogout();
-      clearWebSession();
-      setUser(null);
-      setStatus('unauthenticated');
-    } catch (error) {
-      setAuthError(normalizeAuthError(error));
-    } finally {
-      operationLockRef.current = false;
-      setActiveOperation(null);
-    }
+    const outcome = await completeWebLocalSignOut(
+      webAuthService,
+      sessionRef.current,
+      clearWebSession,
+    );
+    sessionRef.current = outcome.session;
+    setUser(null);
+    setStatus(outcome.status);
+    if (outcome.error) setAuthError(normalizeAuthError(outcome.error));
+    operationLockRef.current = false;
+    setActiveOperation(null);
   }, []);
 
   const clearAuthError = useCallback(() => setAuthError(null), []);

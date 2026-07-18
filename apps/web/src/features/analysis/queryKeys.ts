@@ -28,9 +28,11 @@ export function getWebTaskPollingInterval(
   state: WebAnalysisTaskState | undefined,
   hasError: boolean,
 ) {
-  if (hasError || !state?.runtimeActive) return false;
-  if (state.task?.status === 'queued') return 3_000;
-  if (state.task?.status === 'processing') return 2_000;
+  const pollingActive = state?.pollingActive ?? state?.runtimeActive;
+  const taskStatus = state?.task?.status;
+  if (hasError || !pollingActive) return false;
+  if (taskStatus === 'queued') return 3_000;
+  if (taskStatus === 'processing') return 2_000;
   return false;
 }
 

@@ -2,6 +2,7 @@ import type { AnalysisStatus } from '@tennis/shared-types';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton, AppCard, EmptyState, PageShell, SectionTitle } from '@/components';
+import { mobileApiMode } from '@/config/env';
 import {
   canOpenFullAnalysisResult,
   createAnalysisSummaryItems,
@@ -18,6 +19,8 @@ import {
   formatVideoTitle,
   getUploadStatusPresentation,
 } from '../videoDetailPresentation';
+
+const isMockMode = mobileApiMode.status === 'ready' && mobileApiMode.mode === 'mock';
 
 type VideoDetailContentProps = {
   detail: VideoDetailState;
@@ -85,7 +88,7 @@ function PreviewPlaceholder() {
   return (
     <View accessibilityLabel="视频预览占位" style={styles.preview}>
       <Text style={styles.previewTitle}>视频预览</Text>
-      <Text style={styles.previewDescription}>当前 Demo 暂未接入播放器</Text>
+      <Text style={styles.previewDescription}>当前版本暂未接入播放器</Text>
     </View>
   );
 }
@@ -217,7 +220,10 @@ function ResultSection({
   if (resultQuery.isPending) {
     return (
       <AppCard>
-        <SectionTitle title="分析结果摘要" description="Demo 分析数据" />
+        <SectionTitle
+          title="分析结果摘要"
+          description={isMockMode ? 'Demo 分析数据' : 'API Draft 数据'}
+        />
         <Text accessibilityState={{ busy: true }} style={styles.secondaryText}>
           正在生成结果摘要…
         </Text>
@@ -228,7 +234,10 @@ function ResultSection({
   if (resultQuery.isError) {
     return (
       <AppCard>
-        <SectionTitle title="分析结果摘要" description="Demo 分析数据" />
+        <SectionTitle
+          title="分析结果摘要"
+          description={isMockMode ? 'Demo 分析数据' : 'API Draft 数据'}
+        />
         <Text accessibilityRole="alert" style={styles.errorText}>
           {getSafeDetailErrorMessage(resultQuery.error, '分析结果暂时加载失败，请重试。')}
         </Text>
@@ -240,7 +249,10 @@ function ResultSection({
   if (!resultQuery.data) {
     return (
       <AppCard>
-        <SectionTitle title="分析结果摘要" description="Demo 分析数据" />
+        <SectionTitle
+          title="分析结果摘要"
+          description={isMockMode ? 'Demo 分析数据' : 'API Draft 数据'}
+        />
         <EmptyState title="结果暂未生成" description="分析已完成，但结果数据暂时不可用。" />
       </AppCard>
     );
@@ -259,8 +271,11 @@ function ResultSection({
   });
   return (
     <AppCard>
-      <SectionTitle title="分析结果摘要" description="Demo 分析数据" />
-      <View accessibilityLabel="Demo 分析结果摘要" style={styles.summaryGrid}>
+      <SectionTitle
+        title="分析结果摘要"
+        description={isMockMode ? 'Demo 分析数据' : 'API Draft 数据'}
+      />
+      <View accessibilityLabel="分析结果摘要" style={styles.summaryGrid}>
         {items.map((item) => (
           <View key={item.key} style={styles.summaryItem}>
             <Text style={styles.fieldLabel}>{item.label}</Text>

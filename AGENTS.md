@@ -2,13 +2,12 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。当前推进到阶段 14-C：Mobile 保持 Mock 认证、上传、
-视频详情、受控轮询和完整 Result；Web 已具备受保护后台、独立 Snapshot v2、视频管理、五类详情
-视图、分析 retry、结构化结果、日志、Web-private CV Demo Viewer，以及由唯一 Snapshot 聚合的
-Overview 七项指标、四类 Recharts 图表、三个最近列表和仅开发环境可见的 Demo 数据控制。阶段 14
-改动未暂存、未提交；Overview 缓存一致性、完整活动任务控制和 Mutation Key 语义已最小修正，
-等待最终提交资格判断。
-Backend、Real API、真实 CV 与正式数据处理仍未实现。
+本项目是网球视频分析系统 v0.1 的前端 Demo。当前推进到阶段 15-C：Mobile/Web 保持阶段 14 的
+完整 Mock 闭环，并新增默认 Mock、显式 Real API Draft 的严格模式边界、惰性 Service Factory、
+原生 fetch Client、Zod DTO/Adapter、mode-aware Session 和部分 Level 2 Draft Service。真实上传、
+retry、Statistics、CV、Logs 与 Demo Control Real 实现保持 Level 1 或 Mock-only。阶段 15 改动未
+暂存、未提交；15-C 正在收口 Real 轮询、本地认证清理、DTO 双向引用和 Draft 分页语义，完成后等待
+最终提交资格判断。Backend、真实数据库、真实 CV 与 Supabase 仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
 

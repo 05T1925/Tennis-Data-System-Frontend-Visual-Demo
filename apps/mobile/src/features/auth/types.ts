@@ -1,6 +1,6 @@
 import type { AppError, User } from '@tennis/shared-types';
 
-export const AUTH_SESSION_VERSION = 1 as const;
+export const AUTH_SESSION_VERSION = 2 as const;
 
 export type LoginCredentials = {
   email: string;
@@ -9,7 +9,9 @@ export type LoginCredentials = {
 
 export type AuthSession = {
   version: typeof AUTH_SESSION_VERSION;
-  token: string;
+  mode: 'mock' | 'real';
+  accessToken: string;
+  expiresAt?: string;
   user: User;
 };
 

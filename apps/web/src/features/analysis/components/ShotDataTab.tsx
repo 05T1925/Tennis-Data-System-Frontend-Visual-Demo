@@ -2,6 +2,7 @@ import type { PointRecord, RallyRecord, ShotRecord } from '@tennis/shared-types'
 import { Alert, Button, Card, Descriptions, Empty, Spin, Table, Tabs, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
+import { webApiMode } from '../../../config/env';
 import type { WebAnalysisDetailState } from '../hooks/useWebAnalysisDetail';
 import {
   formatConfidence,
@@ -91,6 +92,7 @@ const pointColumns: ColumnsType<PointRecord> = [
 ];
 
 export function ShotDataTab({ analysis }: { analysis: WebAnalysisDetailState }) {
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
   if (!analysis.resultEnabled || !analysis.canDisplayResult) {
     if (analysis.resultEnabled && analysis.resultQuery.isPending) {
       return <Spin description="正在加载每一拍数据" />;
@@ -119,7 +121,7 @@ export function ShotDataTab({ analysis }: { analysis: WebAnalysisDetailState }) 
   const rallies = sortRallies(result.rallies);
   const points = sortPoints(result.points ?? []);
   return (
-    <Card title="每一拍 Demo 数据" extra={<Tag>结构化结果</Tag>}>
+    <Card title={isMockMode ? '每一拍 Demo 数据' : '每一拍 API 数据'} extra={<Tag>结构化结果</Tag>}>
       <Tabs
         items={[
           {

@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
+import { webApiMode } from '../config/env';
 import { useWebAuth } from '../features/auth';
 import {
   OverviewMetricCards,
@@ -14,9 +15,11 @@ import { formatOverviewDateTime } from '../features/statistics/presentation';
 import { getSafeAppErrorMessage } from '../features/videos';
 
 const OverviewCharts = lazy(() => import('../features/statistics/components/OverviewCharts'));
-const WebDemoControlPanel = import.meta.env.DEV
-  ? lazy(() => import('../features/demo-control/components/WebDemoControlPanel'))
-  : null;
+const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
+const WebDemoControlPanel =
+  import.meta.env.DEV && isMockMode
+    ? lazy(() => import('../features/demo-control/components/WebDemoControlPanel'))
+    : null;
 
 export function OverviewPage() {
   const { status, user } = useWebAuth();
@@ -30,7 +33,10 @@ export function OverviewPage() {
   if (overviewQuery.isPending) {
     return (
       <div className="overview-page-loading" aria-busy="true">
-        <Spin size="large" description="正在加载 Web Demo 总览" />
+        <Spin
+          size="large"
+          description={isMockMode ? '正在加载 Web Demo 总览' : '正在加载 API 总览'}
+        />
       </div>
     );
   }
@@ -51,10 +57,16 @@ export function OverviewPage() {
     <Space orientation="vertical" size="large" className="page-stack overview-page">
       <PageIntro
         title="系统总览"
-        description="统计来自当前浏览器的 Web Demo Snapshot，不代表真实后台数据。"
+        description={
+          isMockMode
+            ? '统计来自当前浏览器的 Web Demo Snapshot，不代表真实后台数据。'
+            : 'Real API Draft 模式；Overview Statistics 正式契约尚未配置。'
+        }
         extra={
           <Flex gap={8} wrap align="center" justify="flex-end">
-            <Tag color="green">本地 Web Demo</Tag>
+            <Tag color={isMockMode ? 'green' : 'blue'}>
+              {isMockMode ? '本地 Web Demo' : 'Real API Draft'}
+            </Tag>
             <Tag>统计日期 {data.referenceDate}</Tag>
             <Button
               icon={<ReloadOutlined />}

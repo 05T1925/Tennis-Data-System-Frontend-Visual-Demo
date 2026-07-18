@@ -1,14 +1,33 @@
-import type { AppError, User } from '@tennis/shared-types';
+import type { AppError } from '@tennis/shared-types';
+import { z } from 'zod';
 
 import { demoWebAdmin } from './mockWebAuth';
+import { WEB_AUTH_SESSION_VERSION, type WebAuthSession } from './types';
 
 const WEB_SESSION_KEY = 'tennis.web.admin.session.v1';
-const WEB_SESSION_VERSION = 1;
 
-type StoredWebSession = {
+type LegacyStoredWebSession = {
   version: 1;
   userId: string;
 };
+
+const userSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(1),
+  email: z.email().optional(),
+  phone: z.string().optional(),
+  role: z.enum(['user', 'admin', 'developer']),
+  avatarUrl: z.string().optional(),
+  createdAt: z.iso.datetime({ offset: true }),
+  updatedAt: z.iso.datetime({ offset: true }),
+});
+const sessionSchema = z.object({
+  version: z.literal(WEB_AUTH_SESSION_VERSION),
+  mode: z.enum(['mock', 'real']),
+  accessToken: z.string().min(1),
+  expiresAt: z.iso.datetime({ offset: true }).optional(),
+  user: userSchema,
+});
 
 function storageError(action: string): AppError {
   return {
@@ -18,13 +37,13 @@ function storageError(action: string): AppError {
   };
 }
 
-function isStoredWebSession(value: unknown): value is StoredWebSession {
+function isLegacyStoredWebSession(value: unknown): value is LegacyStoredWebSession {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
   const session = value as Record<string, unknown>;
-  return session.version === WEB_SESSION_VERSION && session.userId === demoWebAdmin.id;
+  return session.version === 1 && session.userId === demoWebAdmin.id;
 }
 
 function removeInvalidSession() {
@@ -35,7 +54,7 @@ function removeInvalidSession() {
   }
 }
 
-export function restoreWebSession(): User | null {
+export function restoreWebSession(mode: 'mock' | 'real' | null): WebAuthSession | null {
   let rawSession: string | null;
   try {
     rawSession = window.sessionStorage.getItem(WEB_SESSION_KEY);
@@ -49,8 +68,17 @@ export function restoreWebSession(): User | null {
 
   try {
     const parsed: unknown = JSON.parse(rawSession);
-    if (isStoredWebSession(parsed)) {
-      return demoWebAdmin;
+    const current = sessionSchema.safeParse(parsed);
+    if (current.success && current.data.mode === mode) return current.data;
+    if (mode === 'mock' && isLegacyStoredWebSession(parsed)) {
+      const migrated: WebAuthSession = {
+        version: WEB_AUTH_SESSION_VERSION,
+        mode: 'mock',
+        accessToken: 'mock-web-admin-session-token-v2',
+        user: demoWebAdmin,
+      };
+      window.sessionStorage.setItem(WEB_SESSION_KEY, JSON.stringify(migrated));
+      return migrated;
     }
   } catch {
     removeInvalidSession();
@@ -61,10 +89,9 @@ export function restoreWebSession(): User | null {
   return null;
 }
 
-export function saveWebSession(user: User): void {
-  const session: StoredWebSession = { version: WEB_SESSION_VERSION, userId: user.id };
+export function saveWebSession(session: WebAuthSession): void {
   try {
-    window.sessionStorage.setItem(WEB_SESSION_KEY, JSON.stringify(session));
+    window.sessionStorage.setItem(WEB_SESSION_KEY, JSON.stringify(sessionSchema.parse(session)));
   } catch {
     throw storageError('write');
   }

@@ -23,6 +23,13 @@ const userSchema = z.object({
 
 export const authSessionSchema = z.object({
   version: z.literal(AUTH_SESSION_VERSION),
+  mode: z.literal('mock'),
+  accessToken: z.string().min(1),
+  user: userSchema,
+});
+
+export const legacyAuthSessionSchema = z.object({
+  version: z.literal(1),
   token: z.string().min(1),
   user: userSchema,
 });

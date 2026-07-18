@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
+import { webApiMode } from '../config/env';
 import { useWebAuth } from '../features/auth';
 import { VideoFilters } from '../features/videos/components/VideoFilters';
 import { VideoTable } from '../features/videos/components/VideoTable';
@@ -22,6 +23,7 @@ import {
 } from '../features/videos';
 
 export function VideosPage() {
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
   const { status, user } = useWebAuth();
   const actorUserId = user?.id ?? '';
   const navigate = useNavigate();
@@ -79,8 +81,16 @@ export function VideosPage() {
       {messageContext}
       <PageIntro
         title="视频管理"
-        description="查看 Web 私有 Demo 视频、上传状态和基础分析任务状态。"
-        extra={<Tag color="green">本地 Web Demo 数据</Tag>}
+        description={
+          isMockMode
+            ? '查看 Web 私有 Demo 视频、上传状态和基础分析任务状态。'
+            : '查看 Real API Draft 视频、上传状态和基础分析任务状态。'
+        }
+        extra={
+          <Tag color={isMockMode ? 'green' : 'blue'}>
+            {isMockMode ? '本地 Web Demo 数据' : 'Real API Draft'}
+          </Tag>
+        }
       />
       <VideoFilters
         key={parsed.params.keyword}
@@ -126,7 +136,11 @@ export function VideosPage() {
       {data !== undefined && data.total === 0 && (
         <Empty
           description={
-            data.unfilteredTotal === 0 ? '当前没有 Web Demo 视频' : '当前筛选条件没有结果'
+            data.unfilteredTotal === 0
+              ? isMockMode
+                ? '当前没有 Web Demo 视频'
+                : '当前没有 API 视频'
+              : '当前筛选条件没有结果'
           }
         >
           {hasFilters && (
@@ -146,6 +160,7 @@ export function VideosPage() {
             pageSize={data.pageSize}
             loading={listQuery.isFetching && !listQuery.isPlaceholderData}
             deletingVideoIds={deletion.deletingVideoIds}
+            isMockMode={isMockMode}
             onView={(videoId) =>
               navigate(
                 `/videos/${encodeURIComponent(videoId)}${searchString ? `?${searchString}` : ''}`,
@@ -167,7 +182,8 @@ export function VideosPage() {
             onCopy={(videoId) => void copyVideoId(videoId)}
             onDelete={async (videoId) => {
               const deleted = await deletion.deleteVideo(videoId);
-              if (deleted) messageApi.success('Web Demo 视频已删除。');
+              if (deleted)
+                messageApi.success(isMockMode ? 'Web Demo 视频已删除。' : '视频已删除。');
             }}
           />
         </Space>

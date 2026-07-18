@@ -58,6 +58,29 @@ WebDemoDataRepository → localStorage`。Repository 使用内部 version 2 Snap
 场景创建和 force complete 均使用同一写队列与 persist-success-before-memory-swap。Web 不访问 Mobile
 Repository、AsyncStorage 或 Mobile Query keys，也未接入 HTTP。
 
+### 阶段 15 API mode 边界
+
+两端现在分别通过严格 parser 选择一次 `mock | real | invalid`。缺失或空白 `USE_MOCK` 保持零配置
+Mock；显式 `false` 才进入 Real API Draft。业务页面和 Query Hook 继续使用原稳定 Service 名称，
+Factory 内部选择惰性 Mock bundle、Real bundle 或 Unconfigured bundle，Query keys 不包含 mode。
+
+Mock bundle 首次调用时才动态 import，并继续让 Video/Analysis/Statistics 共享原唯一 Repository。
+Real 和 invalid 路径不会求值该 loader，也不访问 Demo Storage。两端 HTTP Client 均使用可注入原生
+fetch、内存 Token Provider、Zod DTO 和纯 Adapter；Mobile 与 Web 不共享运行时 API 文件。
+
+Mobile Real Token 仅存在于运行内存；AsyncStorage 只保存 mode-aware Mock Session，并可迁移 v1。
+Web v2 Session 记录 mode，Real Session 仅保存于当前标签页 sessionStorage。前端 admin role 和 Route
+Guard 仍不构成正式授权。两端本地凭据清理由 Auth Service 独立提供；远端 logout 或 Session 提交失败
+不会保留本地身份。Local Contract Stub 只验证 Frontend Integration Draft，不是 Backend。
+
+Web Task state 的 `runtimeActive` 只表示 Mock Snapshot Runtime，`pollingActive` 表示当前 Service 是否
+需要继续请求。Mock 未提供 polling hint 时继续回退 Runtime；Real queued/processing 提供 true，终态或
+null 提供 false，且始终保持 `runtimeActive=false`。Result Adapter 校验 Shot/Rally/Point ID 唯一及
+双向归属；Web Draft 列表分别消费筛选后 `total` 和未筛选 `unfiltered_total`。
+
+Level 2 Draft 包括两端 Auth、Video list/detail/delete、Task/Result，以及 Mobile startAnalysis。
+真实上传、retry、两端 Statistics、Web CV/Logs 是 Level 1；Web Demo Control 永远只在 DEV + Mock。
+
 ## 2. 当前前端边界
 
 ### Mobile App
@@ -73,8 +96,9 @@ TypeScript，路由位于 `app/`，公共代码位于 `src/`。根布局通过 `
 `MockAuthService` 使用固定延迟和固定账号场景；AsyncStorage 的具体读写、Zod Session 校验和
 错误映射均位于独立模块。页面负责表单和交互，不直接访问 Service 或 Storage。
 
-Session 使用 `tennis.auth.session.v1` key，并在持久化对象内部保存 `version: 1`、Mock token 和
-`User`；不保存密码。Provider 保存 Session 成功后才进入登录态，退出清理成功后才清除内存身份。
+Session 使用 `tennis.auth.session.v1` key，并在持久化对象内部保存 `version: 2`、mode、Mock token 和
+`User`；不保存密码。旧 v1 只迁移为 Mock。Provider 保存 Mock Session 成功后才进入登录态；退出时
+无论远端结果如何都清除本地 Token、Session 和内存身份，远端失败只作为安全错误提示。
 启动恢复完成前根布局不挂载受保护路由，避免登录页或主应用闪烁。损坏 Session 会尝试清理，
 清理失败也会结束恢复并回到登录页。该能力仍是公开 Demo 凭据构成的 Mock 认证，不具备正式
 认证安全性。

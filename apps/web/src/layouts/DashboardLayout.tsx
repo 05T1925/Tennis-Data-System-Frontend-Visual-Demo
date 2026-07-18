@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { getRouteMetadata, navigationItems } from '../app/navigation';
+import { webApiMode } from '../config/env';
 import { useWebAuth } from '../features/auth';
 
 const { Header, Sider, Content } = Layout;
@@ -20,6 +21,7 @@ export function DashboardLayout() {
   const { user, activeOperation, authError, signOut, clearAuthError } = useWebAuth();
   const routeMetadata = getRouteMetadata(location.pathname);
   const isSigningOut = activeOperation === 'logout';
+  const isMockMode = webApiMode.status === 'ready' && webApiMode.mode === 'mock';
 
   return (
     <Layout className="dashboard-shell">
@@ -68,10 +70,12 @@ export function DashboardLayout() {
             <Breadcrumb items={routeMetadata.breadcrumbs.map((title) => ({ title }))} />
           </div>
           <Flex className="header-actions" align="center" gap={12}>
-            <Tag color="green">本地 Mock</Tag>
+            <Tag color={isMockMode ? 'green' : 'blue'}>
+              {isMockMode ? '本地 Mock' : 'Real API Draft'}
+            </Tag>
             <Avatar icon={<UserOutlined />} />
             <span className="header-user">
-              <strong>{user?.displayName ?? 'Demo 管理员'}</strong>
+              <strong>{user?.displayName ?? '管理员'}</strong>
               <small>管理员</small>
             </span>
             <Button

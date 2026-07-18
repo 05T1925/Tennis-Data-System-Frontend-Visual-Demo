@@ -39,12 +39,19 @@ export class MockAuthService implements AuthService {
 
     return {
       version: AUTH_SESSION_VERSION,
-      token: 'mock-demo-session-token-v1',
+      mode: 'mock',
+      accessToken: 'mock-demo-session-token-v1',
       user: demoUser,
     };
+  }
+
+  async restore(session: AuthSession): Promise<AuthSession> {
+    return session;
   }
 
   async logout(_session: AuthSession | null): Promise<void> {
     await waitForMockNetwork();
   }
+
+  clearLocalCredentials(): void {}
 }

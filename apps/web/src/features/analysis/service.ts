@@ -1,4 +1,3 @@
-import { webDemoDataRepository } from '../demo-data';
-import { MockWebAnalysisService } from './mockWebAnalysisService';
+import { webServices } from '../../api/webServices';
 
-export const webAnalysisService = new MockWebAnalysisService(webDemoDataRepository);
+export const webAnalysisService = webServices.webAnalysisService;

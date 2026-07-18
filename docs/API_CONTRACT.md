@@ -126,3 +126,29 @@ Consumer: App / Web Dashboard
 - 阶段 1 计划先实现 Mock Service 来验证 UI 流程。
 - Mock Service 与 Real Service 必须暴露相同的前端 Service 接口。
 - 切换 Real API 时由 Adapter 承担 DTO 转换，不改变页面对 Domain Model 的依赖。
+
+## 7. 阶段 15 前端 Contract Stub 集成 Profile
+
+Status: Frontend Integration Draft。本节只用于阶段 15 Local Contract Stub 和可注入 fetch 测试，
+不代表 Backend 已确认、正式 API 已部署或真实权限已经联调。Base URL 预计包含 `/api/v1`。
+
+成功 envelope 暂为 `{ "data": {}, "request_id": "request-demo-001" }`；失败 envelope 暂为
+`{ "error": { "code": "SOME_ERROR", "message": "Safe message" }, "request_id": "..." }`。
+客户端只消费安全 code/request_id，不向 UI 暴露原始 body。
+
+Auth login 暂用 `{ email, password }`，成功 data 包含 `access_token`、可选 `expires_at` 和 snake_case
+User。Web 暂时复用 `/auth/login`，且 Stub 必须返回 admin；该路径和角色规则仍等待 Backend 确认。
+
+Video list data 暂为
+`{ items: [{ video, analysis_task }], page, page_size, total, unfiltered_total }`，detail data 暂为
+`{ video, analysis_task }`。`total` 是应用 keyword/status/date 筛选后的总数；`unfiltered_total` 是当前
+管理员可见但未应用列表筛选时的全量视频数。两者均为非负整数。Mobile 可忽略后者，但允许同一 Stub
+响应通过校验。`analysis_task` 可为 null。列表内嵌 Task 及 Web 的 keyword、upload_status、
+analysis_status、from、to、page、page_size 查询参数均是阶段 15 Stub 假设，不是正式分页/筛选契约。
+
+Task data 暂为 `{ task: AnalysisTaskDto | null }`；Result data 暂为
+`{ result: AnalysisResultDto | null }`。Result 使用 snake_case，`data_version`/`algorithm_version` 至少
+存在一个，并包含 summary、shots、rallies、points、heatmap_points、player_profile 和引用关系。
+
+阶段 15 Level 2 使用 login/me/logout、Video list/detail/delete、Video analysis start/task/result。
+upload-init/complete、retry、Statistics、CV 和 Logs 仍因契约不足保持 Level 1，不发虚构请求。

@@ -1,8 +1,3 @@
-import { env } from '../../config/env';
-import { webDemoDataRepository } from '../demo-data';
-import { MockWebVideoService } from './mockVideoService';
+import { webServices } from '../../api/webServices';
 
-export const webVideoService = new MockWebVideoService(
-  webDemoDataRepository,
-  env.webVideoMockScenario,
-);
+export const webVideoService = webServices.webVideoService;

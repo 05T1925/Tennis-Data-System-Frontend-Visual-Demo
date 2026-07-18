@@ -1,10 +1,9 @@
 # 网球视频分析系统 v0.1
 
-用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。当前已推进到
-阶段 14-C：Mobile 保持阶段 10 的 Mock 业务闭环；Web 在阶段 13 的分析、结果、日志和 CV Demo
-基础上新增 Overview 七项指标、最近 7 天趋势、状态/成功率/时长图表、三个最近列表，以及仅开发
-环境可见的 reset、场景创建和 force complete。统计与控制继续复用唯一 Web Snapshot v2；阶段 14
-改动未提交；Overview 缓存一致性、完整活动任务控制和 Mutation Key 语义已最小修正，等待最终提交资格判断。
+用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。阶段 15-C 已收口
+Mobile/Web Mock 与 Real API Draft 切换边界：缺失或空白 `USE_MOCK` 默认保持 Mock，只有显式 `false`
+进入 Real API Draft；切换后必须重启进程。Auth、Video 读取/删除、Task/Result 读取和 Mobile 创建任务
+具备可由 Local Contract Stub 验证的 Level 2 Draft HTTP 能力，其余未确认契约保持 Level 1 安全错误。
 
 ## 当前状态
 
@@ -14,9 +13,10 @@
 | Web Dashboard                  | 视频管理、分析详情、Overview 统计、Recharts 和 DEV 控制已接入。     |
 | shared-types                   | 提供 Video、AnalysisTask、AnalysisResult 和通用错误等稳定前端类型。 |
 | Mock 数据与 Service            | Mobile 与 Web 各自使用唯一 Repository；Web Snapshot 已升级为 v2。   |
-| Backend / CV / Data Processing | 尚未创建；当前上传、任务推进和结果数据均为本地确定性 Mock。         |
+| API mode                       | 默认 Mock；显式 false 使用部分 Real API Draft Service。             |
+| Backend / CV / Data Processing | 尚未创建；Local Contract Stub 不是 Backend 或正式 API。             |
 | 阶段 10 结果展示               | 9 项指标、球速/回合/相对落点/能力画像静态可视化已接入。             |
-| 尚未实现                       | 播放器、Real API、Backend、真实 CV 和正式统计接口。                 |
+| 尚未实现                       | 播放器、真实上传、正式 Backend/数据库/CV/统计/日志/retry 契约。     |
 
 ## 环境要求
 
@@ -42,6 +42,17 @@ pnpm format
 `pnpm mobile:start` 启动 Expo/Metro，`pnpm web:dev` 默认启动 Vite 开发服务器。Mobile 和 Web 使用
 Vitest 运行纯 TypeScript 领域、Service 和 workflow 测试；当前没有 React Native 或 Web UI 测试框架。Web 登录
 使用公开 Demo 凭据和当前标签页会话，仅用于验证前端流程，不是正式权限系统。
+
+## API 模式
+
+- `EXPO_PUBLIC_USE_MOCK` / `VITE_USE_MOCK` 缺失、空白或为 `true` 时使用 Mock。
+- 只有精确 `false` 进入 Real API Draft；此时必须提供合法的公开 Base URL。
+- Mobile Real Access Token 只保存在运行内存，重启后需重新登录。
+- Web Real Session 只保存在当前标签页 `sessionStorage`，仍不是生产级认证。
+- Real queued/processing Task 使用远程轮询提示；`runtimeActive` 仍只代表本地 Mock Runtime。
+- 远程 logout 失败仍会完成本地 Token、Session 和身份清理，并显示安全错误。
+- Real 上传、retry、Statistics、CV 和 Logs 只返回明确 Level 1 错误，不回退 Mock。
+- 不使用 Supabase，不包含数据库密码、管理员密钥、Service Role key 或真实 Token。
 
 ## 目录结构
 
