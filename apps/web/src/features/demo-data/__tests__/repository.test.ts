@@ -29,18 +29,18 @@ describe('DefaultWebDemoDataRepository', () => {
     await expect(repository.getSnapshot()).rejects.toMatchObject({
       code: 'WEB_DEMO_DATA_LOAD_FAILED',
     });
-    await expect(repository.getSnapshot()).resolves.toMatchObject({ version: 1 });
+    await expect(repository.getSnapshot()).resolves.toMatchObject({ version: 2 });
     expect(storage.reads).toBe(2);
   });
 
-  it.each(['{broken', JSON.stringify({ version: 2 })])(
+  it.each(['{broken', JSON.stringify({ version: 3 })])(
     'recovers invalid stored data: %s',
     async (value) => {
       const storage = new MemoryWebDemoDataStorage();
       storage.value = value;
       const repository = new DefaultWebDemoDataRepository(storage);
       expect((await repository.getSnapshot()).videos).toHaveLength(24);
-      expect(JSON.parse(storage.value ?? '{}')).toMatchObject({ version: 1 });
+      expect(JSON.parse(storage.value ?? '{}')).toMatchObject({ version: 2 });
     },
   );
 

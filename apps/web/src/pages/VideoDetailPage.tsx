@@ -1,37 +1,27 @@
 import { ArrowLeftOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Button,
-  Card,
-  Descriptions,
-  Flex,
-  message,
-  Popconfirm,
-  Progress,
-  Result,
-  Space,
-  Spin,
-  Tag,
-} from 'antd';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Button, Flex, message, Popconfirm, Result, Space, Spin, Tabs } from 'antd';
+import { useEffect, useMemo } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { PageIntro } from '../components/PageIntro';
+import {
+  AnalysisLogsTab,
+  AnalysisResultTab,
+  areWebDetailSearchParamsEqual,
+  CvDemoOutputTab,
+  parseWebDetailTab,
+  removeWebDetailTab,
+  ShotDataTab,
+  updateWebDetailTab,
+  useWebAnalysisDetail,
+  VideoBasicInfoTab,
+  type WebDetailTab,
+} from '../features/analysis';
 import { useWebAuth } from '../features/auth';
 import {
   copyTextToClipboard,
-  courtTypeLabels,
-  formatDateTime,
-  formatDuration,
-  formatFileSize,
-  formatVideoTitle,
-  getAnalysisStageLabel,
-  getAnalysisStatusPresentation,
   getSafeAppErrorMessage,
-  getSafeProgress,
-  getUploadStatusPresentation,
-  matchTypeLabels,
   normalizeRouteVideoId,
-  playModeLabels,
   useDeleteWebVideo,
   useWebVideoDetail,
 } from '../features/videos';
@@ -41,12 +31,31 @@ export function VideoDetailPage() {
   const normalizedVideoId = normalizeRouteVideoId(videoId);
   const { user } = useWebAuth();
   const actorUserId = user?.id ?? '';
-  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchString = searchParams.toString();
+  const parsedTab = useMemo(
+    () => parseWebDetailTab(new URLSearchParams(searchString)),
+    [searchString],
+  );
   const [messageApi, messageContext] = message.useMessage();
   const detailQuery = useWebVideoDetail({ actorUserId, videoId: normalizedVideoId });
   const deletion = useDeleteWebVideo(actorUserId);
-  const returnTarget = `/videos${location.search}`;
+  const analysis = useWebAnalysisDetail({
+    actorUserId,
+    videoId: normalizedVideoId,
+    uploadStatus: detailQuery.data?.video.uploadStatus ?? '',
+    activeTab: parsedTab.tab,
+  });
+  const listSearchParams = removeWebDetailTab(new URLSearchParams(searchString));
+  const returnTarget = `/videos${listSearchParams.size ? `?${listSearchParams}` : ''}`;
+
+  useEffect(() => {
+    const current = new URLSearchParams(searchString);
+    if (!areWebDetailSearchParamsEqual(current, parsedTab.normalizedSearchParams)) {
+      setSearchParams(parsedTab.normalizedSearchParams, { replace: true });
+    }
+  }, [parsedTab.normalizedSearchParams, searchString, setSearchParams]);
 
   async function copyVideoId(): Promise<void> {
     try {
@@ -66,7 +75,6 @@ export function VideoDetailPage() {
       />
     );
   }
-
   if (detailQuery.isPending) {
     return (
       <div className="video-page-loading" aria-busy="true">
@@ -74,7 +82,6 @@ export function VideoDetailPage() {
       </div>
     );
   }
-
   if (detailQuery.isError || detailQuery.data === undefined) {
     return (
       <Result
@@ -91,25 +98,30 @@ export function VideoDetailPage() {
     );
   }
 
-  const { video, analysisTask } = detailQuery.data;
-  const uploadStatus = getUploadStatusPresentation(video.uploadStatus);
-  const analysisStatus = getAnalysisStatusPresentation(detailQuery.data);
-  const uploadProgress = getSafeProgress(video.uploadProgress, {
-    succeeded: video.uploadStatus === 'uploaded',
-    missingLabel: '数据待确认',
-  });
-  const analysisProgress = getSafeProgress(analysisTask?.progress, {
-    succeeded: analysisTask?.status === 'succeeded',
-  });
+  const { video } = detailQuery.data;
   const deleting = deletion.deletingVideoIds.has(video.id);
-  const deleteError = deletion.deleteErrors.get(video.id);
+  const tabItems: { key: WebDetailTab; label: string; children: React.ReactNode }[] = [
+    {
+      key: 'basic',
+      label: '基础信息',
+      children: <VideoBasicInfoTab video={video} analysis={analysis} />,
+    },
+    { key: 'result', label: '结构化结果', children: <AnalysisResultTab analysis={analysis} /> },
+    { key: 'shots', label: '每一拍数据', children: <ShotDataTab analysis={analysis} /> },
+    {
+      key: 'cv',
+      label: 'CV 原始输出',
+      children: <CvDemoOutputTab analysis={analysis} videoId={video.id} />,
+    },
+    { key: 'logs', label: '分析任务日志', children: <AnalysisLogsTab analysis={analysis} /> },
+  ];
 
   return (
     <Space orientation="vertical" size="large" className="page-stack">
       {messageContext}
       <PageIntro
         title="视频详情"
-        description="查看 Web 私有 Demo 视频元数据和基础分析任务状态。"
+        description="查看 Web 私有 Demo 视频、结构化分析结果和非正式 CV Fixture。"
         extra={
           <Flex gap={8} wrap>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(returnTarget)}>
@@ -120,7 +132,7 @@ export function VideoDetailPage() {
             </Button>
             <Popconfirm
               title="删除当前 Web Demo 视频？"
-              description="将同时删除关联分析任务，不影响 Mobile，也不会调用真实 Backend；当前 UI 内不可撤销。"
+              description="将同时删除关联 Task、Result、CV、日志和 Runtime；不影响 Mobile 或真实 Backend。"
               okText="删除"
               cancelText="取消"
               okButtonProps={{ danger: true, loading: deleting }}
@@ -137,99 +149,15 @@ export function VideoDetailPage() {
           </Flex>
         }
       />
-      {deleteError && <Alert type="error" showIcon title={deleteError} />}
-      <Card title="视频基础信息">
-        <Descriptions bordered column={{ xs: 1, md: 2, xl: 3 }}>
-          <Descriptions.Item label="视频 ID">
-            <span className="safe-route-value">{video.id}</span>
-          </Descriptions.Item>
-          <Descriptions.Item label="用户 ID">{video.userId}</Descriptions.Item>
-          <Descriptions.Item label="名称">
-            {formatVideoTitle(video.title, video.originalFileName)}
-          </Descriptions.Item>
-          <Descriptions.Item label="原始文件名">
-            {video.originalFileName || '数据待确认'}
-          </Descriptions.Item>
-          <Descriptions.Item label="MIME type">{video.mimeType || '数据待确认'}</Descriptions.Item>
-          <Descriptions.Item label="文件大小">
-            {formatFileSize(video.fileSizeBytes)}
-          </Descriptions.Item>
-          <Descriptions.Item label="时长">
-            {formatDuration(video.durationSeconds)}
-          </Descriptions.Item>
-          <Descriptions.Item label="视频类型">
-            {matchTypeLabels[video.matchType] ?? '数据待确认'}
-          </Descriptions.Item>
-          <Descriptions.Item label="比赛形式">
-            {playModeLabels[video.playMode] ?? '数据待确认'}
-          </Descriptions.Item>
-          <Descriptions.Item label="场地">
-            {video.courtType ? courtTypeLabels[video.courtType] : '数据待确认'}
-          </Descriptions.Item>
-          <Descriptions.Item label="备注">{video.note?.trim() || '未填写'}</Descriptions.Item>
-          <Descriptions.Item label="创建时间">{formatDateTime(video.createdAt)}</Descriptions.Item>
-          <Descriptions.Item label="更新时间">{formatDateTime(video.updatedAt)}</Descriptions.Item>
-        </Descriptions>
-      </Card>
-      <Card title="上传信息">
-        <Descriptions bordered column={{ xs: 1, md: 2 }}>
-          <Descriptions.Item label="上传状态">
-            <Tag color={uploadStatus.color}>{uploadStatus.label}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="上传进度">
-            {uploadProgress.value === null ? (
-              uploadProgress.label
-            ) : (
-              <Progress percent={uploadProgress.value} />
-            )}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
-      <Card title="分析任务">
-        {analysisTask === null ? (
-          <Alert
-            type="info"
-            showIcon
-            title={
-              video.uploadStatus === 'uploaded'
-                ? '当前视频尚未创建分析任务。'
-                : '上传尚未完成，未创建分析任务。'
-            }
-          />
-        ) : (
-          <Descriptions bordered column={{ xs: 1, md: 2, xl: 3 }}>
-            <Descriptions.Item label="Task ID">
-              <span className="safe-route-value">{analysisTask.id}</span>
-            </Descriptions.Item>
-            <Descriptions.Item label="状态">
-              <Tag color={analysisStatus.color}>{analysisStatus.label}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="阶段">
-              {getAnalysisStageLabel(analysisTask.stage)}
-            </Descriptions.Item>
-            <Descriptions.Item label="进度">
-              {analysisProgress.value === null ? (
-                analysisProgress.label
-              ) : (
-                <Progress percent={analysisProgress.value} />
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="重试次数">{analysisTask.retryCount}</Descriptions.Item>
-            <Descriptions.Item label="创建时间">
-              {formatDateTime(analysisTask.createdAt)}
-            </Descriptions.Item>
-            <Descriptions.Item label="开始时间">
-              {formatDateTime(analysisTask.startedAt)}
-            </Descriptions.Item>
-            <Descriptions.Item label="完成时间">
-              {formatDateTime(analysisTask.completedAt)}
-            </Descriptions.Item>
-            <Descriptions.Item label="更新时间">
-              {formatDateTime(analysisTask.updatedAt)}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Card>
+      {deletion.deleteErrors.get(video.id) && (
+        <Result status="error" title={deletion.deleteErrors.get(video.id)} />
+      )}
+      <Tabs
+        activeKey={parsedTab.tab}
+        destroyOnHidden
+        items={tabItems}
+        onChange={(key) => setSearchParams(updateWebDetailTab(searchParams, key as WebDetailTab))}
+      />
     </Space>
   );
 }

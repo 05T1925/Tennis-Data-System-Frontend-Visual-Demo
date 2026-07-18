@@ -33,20 +33,23 @@ apps/web                │
         ├─ Web 独立 Mock Auth Context + sessionStorage
         ├─ React Router Guard 与集中导航元数据
         ├─ Dashboard Sidebar / Header / Content
-        └─ Web 主题、基础页面与环境配置
+        ├─ Web VideoService / WebAnalysisService 与 TanStack Query
+        ├─ Snapshot v2、v1 迁移、retry runtime 和 localStorage 写队列
+        └─ 五类详情 Tabs、结构化结果和 Web-private CV Demo Viewer
 ```
 
 Mobile 当前已具备可恢复的 Mock 登录闭环、首页产品切片，以及统一的本地 Demo 业务数据与
 Service 底座。上传页现已接入相册选择、元数据校验、业务表单、Mock 上传进度和失败重试；视频
 列表和视频详情已经接入业务，详情包含受控任务轮询和简要 Result 摘要；独立完整结果页已展示
-9项指标和四类静态可视化，完整统计仍未接入。Web 已建立 Mock 管理员身份、受保护后台框架，并在
-阶段 12-B 接入 Web 私有视频管理数据层、筛选分页和基础详情；Task Result、CV 和统计仍未接入。
+9项指标和四类静态可视化，完整统计仍未接入。Web 已建立 Mock 管理员身份、受保护后台框架、
+视频管理和基础详情；阶段 13-B 增加独立 Analysis Service、结构化 Result、Shot/Rally/Point、
+分析日志、failed Task retry 及明确标记为非正式契约的 CV Demo 数据。
 
 Web 视频数据流为 `Page → Query Hook → Web VideoService → MockWebVideoService →
-WebDemoDataRepository → localStorage`。Repository 使用 version 1 Snapshot、Zod Runtime Schema、
-串行写队列和 `tennis.web.demo.data.v1` 独立 key；不访问 Mobile Repository、AsyncStorage 或 Mobile
-Query keys。列表在 Service 层完成搜索、状态/日期筛选、排序和分页，详情只返回 Video 与可选
-AnalysisTask，单条删除在一次 Snapshot 更新中级联关联 Task。本阶段不接入 Result、CV、轮询或 HTTP。
+WebDemoDataRepository → localStorage`。Repository 使用内部 version 2 Snapshot、Zod Runtime Schema、
+串行写队列和沿用的 `tennis.web.demo.data.v1` 单一物理 key；合法 v1 会在保留 Video/Task 和删除状态的
+前提下原子迁移。Snapshot 同时保存 Result、Web-private CV Demo、日志和 retry runtime；删除在同一
+事务中完整级联。Web 不访问 Mobile Repository、AsyncStorage 或 Mobile Query keys，也未接入 HTTP。
 
 ## 2. 当前前端边界
 

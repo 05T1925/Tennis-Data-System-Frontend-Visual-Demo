@@ -13,7 +13,7 @@ describe('webDemoDataSnapshotSchema', () => {
   });
 
   it.each([
-    ['wrong version', (seed: ReturnType<typeof createWebDemoSeed>) => ({ ...seed, version: 2 })],
+    ['wrong version', (seed: ReturnType<typeof createWebDemoSeed>) => ({ ...seed, version: 3 })],
     [
       'duplicate video ID',
       (seed: ReturnType<typeof createWebDemoSeed>) => ({

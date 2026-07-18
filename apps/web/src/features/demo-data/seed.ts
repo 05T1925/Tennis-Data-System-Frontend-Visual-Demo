@@ -1,5 +1,6 @@
 import type { AnalysisStage, AnalysisStatus, UploadStatus, Video } from '@tennis/shared-types';
 
+import { createInitialTaskLogs, createWebAnalysisAssets } from './analysisFixtures';
 import { webDemoDataSnapshotSchema } from './schemas';
 import type { WebDemoDataSnapshot } from './types';
 import { WEB_DEMO_DATA_VERSION } from './types';
@@ -156,9 +157,25 @@ export function createWebDemoSeed(): WebDemoDataSnapshot {
     ];
   });
 
+  const succeededAssets = analysisTasks.flatMap((task) => {
+    if (task.status !== 'succeeded') return [];
+    const video = videos.find(({ id }) => id === task.videoId);
+    if (!video) return [];
+    return [
+      createWebAnalysisAssets(video, task, {
+        partial: video.id === 'video-web-demo-11',
+        large: video.id === 'video-web-demo-20',
+      }),
+    ];
+  });
+
   return webDemoDataSnapshotSchema.parse({
     version: WEB_DEMO_DATA_VERSION,
     videos,
     analysisTasks,
+    analysisResults: succeededAssets.map(({ result }) => result),
+    cvDemoOutputs: succeededAssets.map(({ cv }) => cv),
+    analysisLogs: analysisTasks.flatMap(createInitialTaskLogs),
+    analysisRuntimes: {},
   });
 }

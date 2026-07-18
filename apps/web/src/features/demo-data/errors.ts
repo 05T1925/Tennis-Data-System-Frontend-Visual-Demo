@@ -6,6 +6,11 @@ const messages: Record<string, string> = {
   WEB_VIDEO_NOT_FOUND: '未找到该视频。',
   WEB_VIDEO_ACCESS_DENIED: '当前 Demo 管理员身份无权执行此操作。',
   WEB_VIDEO_LIST_FAILED: '视频列表暂时加载失败，请重试。',
+  WEB_ANALYSIS_NOT_FOUND: '当前视频没有分析任务。',
+  WEB_ANALYSIS_RETRY_NOT_ALLOWED: '当前分析任务不能重新提交。',
+  WEB_ANALYSIS_LOAD_FAILED: '分析数据暂时加载失败，请重试。',
+  WEB_DEMO_JSON_INVALID: 'Demo JSON 暂时无法生成。',
+  WEB_DEMO_DOWNLOAD_FAILED: 'Demo JSON 暂时无法下载，请重试。',
 };
 
 export function createWebDemoError(

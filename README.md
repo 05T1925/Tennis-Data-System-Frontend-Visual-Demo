@@ -1,21 +1,24 @@
 # 网球视频分析系统 v0.1
 
 用于验证“身份、上传视频、创建分析任务、生成数据、展示结果”闭环的前端 Demo。当前已推进到
-阶段 12-C：Mobile 保持阶段 10 的 Mock 业务闭环；Web 已具备 Mock 管理员登录、受保护后台布局、
-视频管理表格、筛选分页、基础详情和 Web 私有持久化 Mock 数据层。阶段 12-C 代码修正、自动验证和
-人工交互验收完成，等待 ChatGPT 最终提交资格判断。
+阶段 13-C：Mobile 保持阶段 10 的 Mock 业务闭环；Web 在阶段 12 视频管理基础上新增分析任务
+retry、结构化结果、Shot/Rally/Point、任务日志和 Web-private CV Demo 数据查看。独立审查提出的
+Runtime 轮询、日志刷新和失败信息安全问题已最小修正；阶段 13 改动仍未提交。
+补充修正已使大型 JSON 按 50 项真实分页，并以统一的 1000 行可见树规划保留全局节点保护。
+Result Summary 已统一安全处理非有限值、负数和整数约束，CV Copy 失败文案已限定为 CV JSON 场景；
+关键人工交互验收已经完成，部分非阻塞扩展矩阵仍保持未执行；阶段 13-C 等待最终提交资格判断。
 
 ## 当前状态
 
-| 模块                           | 当前状态                                                               |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| Mobile App                     | Mock 身份、上传、列表、详情、轮询、摘要和完整结果页已接入。            |
-| Web Dashboard                  | Mock 管理员、路由保护、视频管理、基础详情及 Web 私有 Demo 数据已接入。 |
-| shared-types                   | 提供 Video、AnalysisTask、AnalysisResult 和通用错误等稳定前端类型。    |
-| Mock 数据与 Service            | Mobile 共享唯一 DemoDataRepository；Web 使用独立 localStorage Mock。   |
-| Backend / CV / Data Processing | 尚未创建；当前上传、任务推进和结果数据均为本地确定性 Mock。            |
-| 阶段 10 结果展示               | 9 项指标、球速/回合/相对落点/能力画像静态可视化已接入。                |
-| 尚未实现                       | Web Task/Result/CV/统计、播放器、Real API、Backend 和 CV。             |
+| 模块                           | 当前状态                                                            |
+| ------------------------------ | ------------------------------------------------------------------- |
+| Mobile App                     | Mock 身份、上传、列表、详情、轮询、摘要和完整结果页已接入。         |
+| Web Dashboard                  | 视频管理、五类详情视图、分析 retry、结果及 CV Demo 数据已接入。     |
+| shared-types                   | 提供 Video、AnalysisTask、AnalysisResult 和通用错误等稳定前端类型。 |
+| Mock 数据与 Service            | Mobile 与 Web 各自使用唯一 Repository；Web Snapshot 已升级为 v2。   |
+| Backend / CV / Data Processing | 尚未创建；当前上传、任务推进和结果数据均为本地确定性 Mock。         |
+| 阶段 10 结果展示               | 9 项指标、球速/回合/相对落点/能力画像静态可视化已接入。             |
+| 尚未实现                       | Web 统计、播放器、Real API、Backend 和真实 CV。                     |
 
 ## 环境要求
 
@@ -59,6 +62,7 @@ Vitest 运行纯 TypeScript 领域、Service 和 workflow 测试；当前没有 
 │        ├─ features/auth/    # Web 独立 Mock 管理员会话
 │        ├─ features/demo-data/ # Web 独立 localStorage Demo Snapshot
 │        ├─ features/videos/  # Web 视频 Service、Query、列表和详情
+│        ├─ features/analysis/ # Web 分析 Service、Query、Tabs 和 CV Demo Viewer
 │        ├─ layouts/
 │        ├─ pages/
 │        ├─ config/

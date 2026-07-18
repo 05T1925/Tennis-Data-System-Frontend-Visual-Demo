@@ -1,12 +1,17 @@
 # 项目状态
 
-最近更新时间：2026-07-17
+最近更新时间：2026-07-18
 
 ## 当前阶段
 
-阶段 12-C：Web 视频管理与基础详情代码修正、自动验证和人工交互验收完成，等待 ChatGPT 最终
-提交资格判断。当前分支为 `feature/stage-12-web-video-management`，HEAD 为阶段 11 基线
-`73df913`；阶段 12 改动未暂存、未提交。Expo dependency check 保留已知的 8 个既有补丁版本例外。
+阶段 13-C：独立审查提出的 Runtime-aware Task 查询、Logs 自动刷新和失败信息安全问题已最小修正，
+自动验证与最终 Vite 路径验证已完成；浏览器补充完成 retry/Logs、CV 下载、筛选、分页、Clipboard、
+异常 Seed、键盘/focus、Session、404 和控制台等验收。JSON Viewer 大数组批次现按 50 项真实增加，
+全局 1000 节点预算改为统一 DFS 可见行规划。Result Summary 的 8 个数字字段已统一防御非有限、
+负数、整数约束和必填/可选缺失；CV Copy 失败使用 CV JSON 上下文文案。阶段 13-C 已完成代码修正、
+自动验证和关键人工交互验收，等待 ChatGPT 最终提交资格判断。当前分支为
+`feature/stage-13-web-analysis-cv`，基线 HEAD 为阶段 12 最终提交 `a2acec7`；阶段 13 改动未暂存、
+未提交。Backend、Real API 和真实 CV 仍未实现。
 
 ## 状态摘要
 
@@ -19,7 +24,13 @@ Public-only Guard、根重定向和安全 404。Ant Design 后台 Layout 提供�
 Mock 标识、用户与退出入口；集中导航元数据统一菜单高亮、页面标题和面包屑。TanStack Query
 Provider 已建立。阶段 12-B 新增 Web 私有 Snapshot、Zod Schema、localStorage、Repository、
 VideoService、URL 参数、Query Hooks、视频表格、筛选分页、基础详情、Clipboard 和单条级联删除。
-Task Result、CV、统计图表和分析失败重试仍未接入。
+阶段 13-B 将 Web Snapshot 升级为 v2，新增安全 v1 迁移、独立 AnalysisService、failed Task retry、
+惰性推进、Result/Shot/Rally/Point、任务日志和 Web-private CV Demo Viewer。阶段 13-C 使 Task 查询
+同时返回持久化 Runtime 状态，无 Runtime 的 active Seed 不再轮询；Logs Tab 随 Task revision 精确
+刷新，失败原因统一经过安全函数后再进入 UI 和用户日志。统计图表仍未接入。
+
+Web 继续使用唯一物理 key `tennis.web.demo.data.v1`，内部结构版本为 2，以单 key 原子替换避免跨 key
+部分写入。CV Fixture 明确是非正式契约，只用于前端展示验证；不表示真实视频帧、模型或推理服务。
 
 VideoService 已向后兼容扩展列表、详情、创建元数据、模拟上传和级联删除。AnalysisService 支持
 开始、查询 Task/Result、确定性阶段推进、ball_tracking 固定失败及原地 retry。StatisticsService
@@ -77,21 +88,21 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 
 ## 模块状态
 
-| 模块                    | 状态             | 真实说明                                                    |
-| ----------------------- | ---------------- | ----------------------------------------------------------- |
-| Mobile Auth             | ✅ 阶段 4 保持   | Auth、Session key、Provider 和路由未修改。                  |
-| Mobile 首页             | ✅ 阶段 5 保持   | 两个 Query、五种场景、四态和 UI 未修改。                    |
-| Demo Data               | ✅ 阶段 6-C 收口 | 单例 Repository、严格 Schema、可重试初始化、写队列、reset。 |
-| Video Service           | ✅ Mock + 列表   | list 接入 Query、场景、筛选、刷新、卡片和详情入口。         |
-| Analysis Service        | ✅ Mock 底座     | start/task/result/retry 与惰性阶段推进；无 CV。             |
-| Statistics Service      | ✅ 动态聚合      | 从当前 Repository 数据计算首页统计。                        |
-| Mobile 上传页           | ✅ Mock 闭环     | 相册选择、表单、进度、fail-once、retry、离开提示和导航。    |
-| Mobile 视频列表         | ✅ 阶段 8-C      | 刷新竞态、retry 错误生命周期和文档事实已收口。              |
-| Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。            |
-| Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                      |
-| 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                          |
-| Web Dashboard           | ✅ 阶段 12-C     | 代码修正、自动验证和人工交互验收已完成。                    |
-| Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                              |
+| 模块                    | 状态             | 真实说明                                                           |
+| ----------------------- | ---------------- | ------------------------------------------------------------------ |
+| Mobile Auth             | ✅ 阶段 4 保持   | Auth、Session key、Provider 和路由未修改。                         |
+| Mobile 首页             | ✅ 阶段 5 保持   | 两个 Query、五种场景、四态和 UI 未修改。                           |
+| Demo Data               | ✅ 阶段 6-C 收口 | 单例 Repository、严格 Schema、可重试初始化、写队列、reset。        |
+| Video Service           | ✅ Mock + 列表   | list 接入 Query、场景、筛选、刷新、卡片和详情入口。                |
+| Analysis Service        | ✅ Mock 底座     | start/task/result/retry 与惰性阶段推进；无 CV。                    |
+| Statistics Service      | ✅ 动态聚合      | 从当前 Repository 数据计算首页统计。                               |
+| Mobile 上传页           | ✅ Mock 闭环     | 相册选择、表单、进度、fail-once、retry、离开提示和导航。           |
+| Mobile 视频列表         | ✅ 阶段 8-C      | 刷新竞态、retry 错误生命周期和文档事实已收口。                     |
+| Mobile 视频详情         | ✅ 阶段 9-B      | 详情、受控轮询、retry 和简要 Result 摘要已接入。                   |
+| Mobile 完整结果         | ✅ 阶段 10-C     | 独立审查、文档事实和提交前验证已收口。                             |
+| 其他 Mobile 业务页面    | ⏳ 仍为骨架      | 完整统计尚未实现。                                                 |
+| Web Dashboard           | ⏳ 阶段 13-C     | 已完成代码修正、自动验证和关键人工交互验收，等待最终提交资格判断。 |
+| Real API / Backend / CV | ⏳ 未实现        | 当前能力不代表真实上传或分析。                                     |
 
 ## 数据、并发与安全边界
 
@@ -106,9 +117,9 @@ Query success/non-null时才向页面暴露Result，disabled Query中可能存�
 ## 测试与依赖
 
 阶段 12-B 为 Web 新增 `zod@^4.4.3`、`vitest@^4.1.10` 和 test script；阶段 12-C 增强边界测试。
-Web 7 个测试文件、97 个用例通过，Mobile 15 个测试文件、287 个用例通过；Web 和整仓
-lint/typecheck、format check、Web build 及 `git diff --check` 通过。Web build 保留约
-1,293 kB 主 JS chunk 的性能 warning。
+阶段 13-C 最终复验中 Web 15 个测试文件、167 个用例通过，Mobile 15 个测试文件、287 个用例通过；
+Web 和整仓 lint/typecheck、format check、Web build 及 `git diff --check` 通过。最终 Web build
+转换 3269 modules，主 JS 1,354.63 kB、gzip 425.64 kB，保留大于 500 kB chunk warning。
 
 阶段 11-B 为 Web 新增 `antd`、`@ant-design/icons` 和 `@tanstack/react-query` 三个直接依赖，
 只修改 Web package 与根锁文件。阶段 7 新增 Expo SDK 兼容的 expo-image-picker `57.0.2` 和
@@ -148,8 +159,14 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
 - 当前没有相机、真实上传、播放器或真实算法。
 - Web Mock 登录不是正式权限系统，Route Guard 不是服务端授权；会话只在当前标签页有效。
 - Web 与 Mobile 不共享运行时数据，Web 不访问 Mobile DemoDataRepository。
-- Web 尚无 UI 自动测试；阶段 12 的人工浏览器验收已覆盖核心列表、筛选、URL、详情、删除、键盘、
-  1024～1920px 布局和回归项目。
+- Web 尚无 UI 自动测试；阶段 13-C 已补充核心 retry/Logs、CV 下载、复制、删除、URL、筛选、分页、
+  异常 Seed、键盘/focus、Session、404、1024～1920px 和控制台验收。大型 JSON 已实际通过
+  50→100→150→180、无重复/跳号和最终按钮消失；仓库外 fixture 已补充深度 20、object URL revoke、
+  succeeded 缺 Result、非法数值和复制拒绝证据。最终复验确认异常 Result 不再显示 NaN/Infinity，
+  CV Copy reject 文案包含 `CV Demo JSON` 且不含“视频 ID”；正常 Result、Copy、Download、视频 ID
+  Clipboard 和 JSON Viewer 均保持正常。
+- Header 操作、部分 retry/Result 异常矩阵、长 ID、空日志、非法日志时间等非阻塞扩展人工矩阵仍未
+  全部执行；关键人工交互验收完成不代表 105 项全部通过。
 
 ## 下一阶段条件
 
@@ -159,5 +176,5 @@ files/5,103,216 bytes，iOS 1405 modules/25 files/3,847,712 bytes，临时目录
 - Expo 补丁对齐继续作为独立 maintenance 任务，不属于阶段 11 代码范围，也不阻塞阶段 11 基础
   框架审查。
 - 阶段 12-C 代码修正、自动验证和人工交互验收完成，等待 ChatGPT 最终提交资格判断。
-- 阶段 13 的 Task retry、Result、CV 和日志尚未开始。
+- 阶段 13-C 已完成代码修正、自动验证和关键人工交互验收，等待 ChatGPT 最终提交资格判断。
 - Real API 接入时新增 DTO/Adapter 和 Real Service，不让页面或 Repository 承担传输转换。
