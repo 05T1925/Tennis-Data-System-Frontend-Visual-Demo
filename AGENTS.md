@@ -2,14 +2,22 @@
 
 ## 项目目标与当前阶段
 
-本项目是网球视频分析系统 v0.1 的前端 Demo。当前推进到阶段 15-C：Mobile/Web 保持阶段 14 的
-完整 Mock 闭环，并新增默认 Mock、显式 Real API Draft 的严格模式边界、惰性 Service Factory、
-原生 fetch Client、Zod DTO/Adapter、mode-aware Session 和部分 Level 2 Draft Service。真实上传、
-retry、Statistics、CV、Logs 与 Demo Control Real 实现保持 Level 1 或 Mock-only。阶段 15 改动未
-暂存、未提交；15-C 正在收口 Real 轮询、本地认证清理、DTO 双向引用和 Draft 分页语义，完成后等待
-最终提交资格判断。Backend、真实数据库、真实 CV 与 Supabase 仍未实现。
+本项目是网球视频分析系统 v0.1 的前端 Demo。阶段 15 已提交并关闭，提交为 `a12c77f`。当前阶段
+为 16-C 最终文档事实一致性修正；阶段 16-A 未发现需要在阶段 16 修改的高风险业务代码问题。Mobile/Web
+保持完整 Mock 闭环、默认 Mock、显式 Real API Draft 边界和部分 Level 2 Draft Service。真实上传、
+retry、Statistics、CV、Logs 的 Real 实现仍为 Level 1；Backend、真实数据库、真实 CV 与 Supabase
+仍未实现。
 
 v0.1 目标是跑通“身份、上传视频、创建分析任务、生成数据、展示结果”的原型闭环，不追求正式发布能力或高精度算法。
+
+## 阶段 16 收口边界
+
+- 阶段 16-C 业务源码冻结，只允许任务明确授权的文档修改；M1～M3、M5 与 L1～L3 不在阶段 16 修复。
+- M4 已通过阶段 16-B 文档更新关闭；阶段 16-C 完成仍不等于阶段 16 已关闭或具备提交资格。
+- 不得自动执行 Git 提交、暂存或推送。
+- Local Contract Stub 只能描述为前端测试夹具，不能描述成 Backend。
+- Metro ready 只能证明 Expo/Metro 启动，不能描述成 Android/iOS 真机通过。
+- Mock Demo readiness 不等于 Production readiness，不得使用“生产可用”结论。
 
 ## 当前目录与包
 

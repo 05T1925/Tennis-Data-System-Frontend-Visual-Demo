@@ -55,8 +55,9 @@ Web 视频数据流为 `Page → Query Hook → Web VideoService → MockWebVide
 WebDemoDataRepository → localStorage`。Repository 使用内部 version 2 Snapshot、Zod Runtime Schema、
 串行写队列和沿用的 `tennis.web.demo.data.v1` 单一物理 key；合法 v1 会在保留 Video/Task 和删除状态的
 前提下原子迁移。Snapshot 同时保存 Result、Web-private CV Demo、日志和 retry runtime；删除、reset、
-场景创建和 force complete 均使用同一写队列与 persist-success-before-memory-swap。Web 不访问 Mobile
-Repository、AsyncStorage 或 Mobile Query keys，也未接入 HTTP。
+场景创建和 force complete 均使用同一写队列与 persist-success-before-memory-swap。Web Mock 数据流
+不访问 Mobile Repository、AsyncStorage、Mobile Query keys 或 HTTP；Real API Draft 的 HTTP 路径由
+下一节所述 Service Factory、原生 fetch Client、DTO 和 Adapter 提供。
 
 ### 阶段 15 API mode 边界
 
@@ -137,9 +138,9 @@ reconcile：上传完成原子创建唯一 Task，分析完成原子创建唯一
 追赶。系统时间倒退时已持久化进度不回退。测试注入可变 Clock、顺序 ID 与 Memory Storage，不
 依赖真实等待或原生 AsyncStorage。
 
-当前没有 Real VideoService、Real AnalysisService 或 Real StatisticsService。未来接入 API 时应在
-Service 边界增加 DTO 与 Adapter，处理 snake_case 到 camelCase，保持页面、Query Hook 和领域
-消费模型不变；Real Service 不复用 Demo Repository。
+阶段 15 已增加 Real Auth/Video/Analysis Draft Service、端内 DTO/Adapter 和原生 fetch Client。
+部分方法达到 Level 2 Draft；Statistics、真实上传、retry、CV 和 Logs 等未确认契约保持 Level 1。
+Real Service 不复用 Demo Repository，页面、Query Hook 和领域消费模型继续使用相同接口。
 
 阶段 7 新增独立 Upload feature。`useVideoPicker` 通过 expo-image-picker 请求或确认相册权限，只
 允许单选 MP4/MOV 视频；expo-file-system 仅在 Picker 缺少大小时通过 `File.size` 读取元数据，
@@ -209,8 +210,10 @@ Protected/Public-only Guard 分别处理后台和登录路由，根路径确定�
 
 `DashboardLayout` 通过集中导航元数据生成 Sidebar、页面标题、选中项和面包屑；动态视频详情
 高亮视频管理。视频列表和基础详情通过 Web 私有 Service、Repository 和 Query Hook 查询确定性
-Mock 数据；总览、分析任务、CV、统计和系统页面仍为阶段 11 基础结构。Web 不导入 Mobile 代码，
-不读取 AsyncStorage 或 Mobile DemoDataRepository；Real Service 和 DTO Adapter 仍推迟到阶段 15。
+Mock 数据；Overview 已接入 Snapshot 聚合、Recharts、最近列表和 DEV Demo Control，视频详情提供
+Result、Shot、CV Fixture 和 Logs Tabs。独立分析任务、CV 和统计路由仍为明确占位结构。Web 不导入
+Mobile 代码，不读取 AsyncStorage 或 Mobile DemoDataRepository。阶段 15 已增加私有 DTO/Adapter
+和部分 Real API Draft Service。
 
 ### shared-types
 
@@ -242,8 +245,8 @@ CV Output / Analysis Result / Statistics
 - Data Processing：计划生成 Shot、Rally、Point、Analysis Result 和 Statistics，尚未创建。
 - Auth 范围已接入 Mock Service、React Hook Form、Zod 和独立 AsyncStorage Session；Mobile 已
   接入 TanStack Query、统一 Demo Repository、Video/Analysis/Statistics Mock Service 和 Vitest
-  纯 TypeScript 状态测试。Web 已接入 Ant Design 与 TanStack Query 基础 Provider，但 Real
-  Service、Web 业务 DTO Adapter、Zustand 和 Recharts 均尚未接入。
+  纯 TypeScript 状态测试。Web 已接入 Ant Design、TanStack Query、Recharts、Web 私有 DTO/Adapter
+  和部分 Real API Draft Service。Zustand 当前未使用，正式 Backend 仍未接入。
 
 ## 4. 分层原则
 
