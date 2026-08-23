@@ -1,0 +1,23 @@
+{
+  "name": "@tennis-ui/second",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5182 --strictPort",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run",
+    "check:monochrome": "node scripts/check-monochrome.mjs"
+  },
+  "dependencies": {
+    "@tennis-ui/core": "workspace:*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2"
+  }
+}
