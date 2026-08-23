@@ -1,0 +1,5 @@
+packages:
+  - first
+  - second
+  - third
+  - packages/*

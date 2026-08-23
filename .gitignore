@@ -1,0 +1,31 @@
+# Dependencies and package-manager caches
+**/node_modules/
+**/.pnpm-store/
+
+# Build, test, and tool output
+**/dist/
+**/coverage/
+**/.vite/
+**/*.tsbuildinfo
+**/.cache/
+
+# Local runtime output
+*.log
+*.local
+!.env.example
+
+# Review screenshots and generated media
+review-assets/
+**/review-assets/
+*.png
+*.jpg
+*.jpeg
+*.webp
+!frontend-reference/static/court.png
+
+# Archives and process artifacts
+*.zip
+*.rar
+
+# Legacy process-only workspace
+demo_test/

@@ -1,0 +1,36 @@
+{
+  "name": "tennis-video-ui-prototypes",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "dev:first": "pnpm --filter @tennis-ui/first dev",
+    "dev:second": "pnpm --filter @tennis-ui/second dev",
+    "dev:third": "pnpm --filter @tennis-ui/third dev",
+    "build": "pnpm --filter @tennis-ui/core build && pnpm --filter @tennis-ui/first build && pnpm --filter @tennis-ui/second build && pnpm --filter @tennis-ui/third build",
+    "lint": "eslint packages/core/src packages/core/tests first/src first/tests second/src second/tests third/src third/tests",
+    "typecheck": "pnpm --filter @tennis-ui/core typecheck && pnpm --filter @tennis-ui/first typecheck && pnpm --filter @tennis-ui/second typecheck && pnpm --filter @tennis-ui/third typecheck",
+    "test": "pnpm --filter @tennis-ui/core test && pnpm --filter @tennis-ui/first test && pnpm --filter @tennis-ui/second test && pnpm --filter @tennis-ui/third test",
+    "check:second-colors": "pnpm --filter @tennis-ui/second check:monochrome",
+    "check:third-colors": "pnpm --filter @tennis-ui/third check:monochrome",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "jsdom": "^28.0.0",
+    "prettier": "^3.9.5",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.62.0",
+    "vite": "^8.1.1",
+    "vitest": "^4.1.10"
+  }
+}
