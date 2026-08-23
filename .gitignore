@@ -22,6 +22,12 @@ review-assets/
 *.jpeg
 *.webp
 !frontend-reference/static/court.png
+!demo_test/apps/mobile/assets/images/
+!demo_test/apps/mobile/assets/images/*.png
+!demo_test/apps/mobile/assets/expo.icon/
+!demo_test/apps/mobile/assets/expo.icon/Assets/
+!demo_test/apps/mobile/assets/expo.icon/Assets/*.png
+!demo_test/apps/mobile/assets/expo.icon/Assets/*.svg
 
 # Archives and process artifacts
 *.zip
