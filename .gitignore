@@ -27,5 +27,8 @@ review-assets/
 *.zip
 *.rar
 
-# Legacy process-only workspace
-demo_test/
+# Legacy workspace: keep source, omit local dependencies and process artifacts
+demo_test/node_modules/
+demo_test/.pnpm-store/
+demo_test/**/*.rar
+demo_test/other_docs/tennis-stage-review-evidence/

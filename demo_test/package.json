@@ -1,0 +1,18 @@
+{
+  "name": "tennis-video-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "mobile:start": "pnpm --filter @tennis/mobile start",
+    "web:dev": "pnpm --filter @tennis/web-dashboard dev",
+    "web:build": "pnpm --filter @tennis/web-dashboard build",
+    "lint": "pnpm --recursive --if-present lint",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.5"
+  }
+}

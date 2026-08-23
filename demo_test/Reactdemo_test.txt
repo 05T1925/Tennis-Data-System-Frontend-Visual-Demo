@@ -1,0 +1,38 @@
+cd C:\Users\28641\Desktop\React\demo_test
+git branch --show-current
+pnpm mobile:start
+
+3. 测试错误账号
+错误凭据可以输入：
+邮箱：wrong@tennis.local
+密码：WrongDemo123!
+预期：
+邮箱或密码不正确
+
+固定网络错误账号：
+邮箱：network@tennis.local
+密码：NetworkDemo123!
+预期显示清楚的 Mock 网络错误。
+
+4. 测试正确登录
+勾选协议后输入：
+邮箱：demo@tennis.local
+密码：TennisDemo123!
+
+cd C:\Users\28641\Desktop\React\demo_test
+pnpm web:dev
+
+› Metro: exp://10.21.225.70:8081
+› Web: http://localhost:8081
+http://localhost:5173/
+
+浏览器登录账号：
+admin@tennis.local
+TennisAdmin123!
+
+w
+ctrl c
+
+0    A B c
+1 2 3   ab合并  c
+4    A B C B C B C

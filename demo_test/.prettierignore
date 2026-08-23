@@ -1,0 +1,14 @@
+node_modules
+.pnpm-store
+dist
+coverage
+.expo
+other_docs/
+apps/mobile/expo-env.d.ts
+*.docx
+pnpm-lock.yaml
+docs/API_CONTRACT.md
+docs/DATA_MODEL.md
+docs/GLOSSARY.md
+docs/PRODUCT_REQUIREMENTS.md
+docs/progress/stage-00-project-foundation.md
